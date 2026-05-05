@@ -117,6 +117,33 @@ const Starfield = () => {
 };
 
 export default function PricingPage({ onNavigate }) {
+  const [isStartingCheckout, setIsStartingCheckout] = useState(false);
+  const [checkoutError, setCheckoutError] = useState('');
+
+  const startTrialCheckout = async () => {
+    setIsStartingCheckout(true);
+    setCheckoutError('');
+
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${API_BASE}/api/create-checkout-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: 'clinician-pro' }),
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.url) {
+        throw new Error(data.message || 'Failed to start checkout');
+      }
+
+      window.location.href = data.url;
+    } catch (error) {
+      setCheckoutError(error.message || 'Payment initialization failed.');
+      setIsStartingCheckout(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#020617] text-slate-50 font-inter selection:bg-cyan-500/30 relative overflow-x-hidden flex flex-col">
       <Starfield />
@@ -141,6 +168,12 @@ export default function PricingPage({ onNavigate }) {
           <p className="text-lg text-slate-400 max-w-2xl mx-auto font-light">
             Deploy the swarm on your hardware or scale across clinical clusters. Simple pricing for deterministic results.
           </p>
+          <p className="text-xs text-slate-500 mt-4">
+            Clinician Pro requires card details before trial activation via secure Stripe Checkout.
+          </p>
+          {checkoutError && (
+            <p className="text-red-400 text-sm mt-4 font-medium">{checkoutError}</p>
+          )}
         </motion.div>
 
         <div className="w-full max-w-7xl grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
@@ -184,10 +217,11 @@ export default function PricingPage({ onNavigate }) {
                 <li className="flex items-center gap-3 text-sm text-slate-300"><CustomIcons.Check /> Priority Verification Queue</li>
               </ul>
               <button
-                onClick={() => onNavigate('dashboard')}
-                className="w-full py-4 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-inter font-semibold tracking-widest uppercase text-xs transition-all shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:shadow-[0_0_30px_rgba(99,102,241,0.6)]"
+                onClick={startTrialCheckout}
+                disabled={isStartingCheckout}
+                className="w-full py-4 rounded-xl bg-indigo-500 hover:bg-indigo-400 disabled:opacity-60 disabled:cursor-not-allowed text-white font-inter font-semibold tracking-widest uppercase text-xs transition-all shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:shadow-[0_0_30px_rgba(99,102,241,0.6)]"
               >
-                Start Trial
+                {isStartingCheckout ? 'Redirecting to Checkout...' : 'Add Card & Start Trial'}
               </button>
             </TiltCard>
           </div>

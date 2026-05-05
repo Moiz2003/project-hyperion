@@ -58,7 +58,7 @@ const Starfield = () => {
 const DOC_CONTENT = {
   'feature-tour': {
     title: 'The Hyperion Architecture',
-    subtitle: 'Feature Tour & System Design',
+    subtitle: '',
     content: (
       <div className="space-y-8">
         <p className="text-xl text-slate-300 font-medium leading-relaxed">
@@ -93,7 +93,7 @@ const DOC_CONTENT = {
   },
   'documentation': {
     title: 'Platform Documentation',
-    subtitle: 'Deploying the Hyperion Swarm',
+    subtitle: '',
     content: (
       <div className="space-y-8 text-slate-300 leading-relaxed font-medium">
         <p>Hyperion is designed to be completely air-gapped. Deployment requires zero external API keys if running fully local open-weights.</p>
@@ -161,7 +161,7 @@ const DOC_CONTENT = {
   },
   'privacy': {
     title: 'Privacy Policy',
-    subtitle: 'Zero Data Retention Framework',
+    subtitle: '',
     content: (
       <div className="space-y-6 text-slate-400 leading-relaxed">
         <p className="font-bold text-white">Last Updated: April 2026</p>
@@ -232,7 +232,7 @@ export default function DocumentPage({ type, onNavigate }) {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="bg-slate-900/40 backdrop-blur-xl border border-slate-800 p-8 md:p-16 rounded-[40px] shadow-2xl relative overflow-hidden"
+          className="bg-slate-900/40 backdrop-blur-xl border border-slate-800 px-8 py-2 md:p-16 rounded-[40px] shadow-2xl relative overflow-hidden"
         >
           {/* Decorative Glow */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-[100px] pointer-events-none rounded-full" />
