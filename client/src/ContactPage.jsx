@@ -90,7 +90,7 @@ export default function ContactPage({ onNavigate }) {
           <div className="mb-12 border-b border-slate-800 pb-12 relative z-10">
             <h2 className="text-xs font-bold tracking-widest text-cyan-400 uppercase mb-4">Get in Touch</h2>
             <h1 className="text-4xl md:text-6xl font-bold text-white tracking-tighter leading-tight">
-              Contact Hyperion
+              Contact Us
             </h1>
           </div>
 

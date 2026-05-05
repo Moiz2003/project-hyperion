@@ -1,11 +1,19 @@
 import { useState, useRef, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import LandingPage from './LandingPage';
 import SplashScreen from './SplashScreen';
 import PricingPage from './PricingPage';
 import DocumentPage from './DocumentPage';
 import ContactPage from './ContactPage';
+import AboutPage from './AboutPage';
+import {
+  RadiologyAIAssistantPage,
+  RuralClinicsPage,
+  EmergencyDiagnosisSupportPage,
+  TelemedicineIntegrationPage,
+} from './pages/solutions/SolutionPages';
 import { HyperionLogo, HyperionIcon } from './Logo';
 
 // Custom SVGs for the Dashboard HUD
@@ -86,6 +94,9 @@ const HUDIcons = {
 };
 
 export default function App() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [currentView, setCurrentView] = useState(() => {
     return sessionStorage.getItem('hasSeenSplash') ? 'landing' : 'splash';
   });
@@ -107,12 +118,81 @@ export default function App() {
 
   const fileInputRef = useRef(null);
 
+  const openFilePicker = () => {
+    fileInputRef.current?.click();
+  };
+
   const loadingStages = [
     "Intake Agent scanning image geometry...",
     "Diagnostic Agent drafting preliminary findings...",
     "Critic Node verifying against knowledge base...",
     "Synthesizing final diagnostic report..."
   ];
+
+  const docTypes = ['feature-tour', 'documentation', 'api-reference', 'privacy', 'terms', 'hipaa'];
+
+  const viewToPath = (view) => {
+    switch (view) {
+      case 'splash':
+      case 'landing':
+      case 'solutions':
+        return '/';
+      case 'pricing':
+        return '/pricing';
+      case 'contact':
+        return '/contact';
+      case 'about':
+        return '/about';
+      case 'radiology-ai-assistant':
+        return '/solutions/radiology-ai-assistant';
+      case 'rural-clinics-low-resource-settings':
+        return '/solutions/rural-clinics-low-resource-settings';
+      case 'emergency-diagnosis-support':
+        return '/solutions/emergency-diagnosis-support';
+      case 'telemedicine-integration':
+        return '/solutions/telemedicine-integration';
+      case 'dashboard':
+        return '/dashboard';
+      default:
+        if (docTypes.includes(view)) return `/docs/${view}`;
+        return '/';
+    }
+  };
+
+  const pathToView = (pathname) => {
+    if (pathname === '/' || pathname === '') {
+      return sessionStorage.getItem('hasSeenSplash') ? 'landing' : 'splash';
+    }
+    if (pathname === '/pricing') return 'pricing';
+    if (pathname === '/contact') return 'contact';
+    if (pathname === '/about') return 'about';
+    if (pathname === '/solutions/radiology-ai-assistant') return 'radiology-ai-assistant';
+    if (pathname === '/solutions/rural-clinics-low-resource-settings') return 'rural-clinics-low-resource-settings';
+    if (pathname === '/solutions/emergency-diagnosis-support') return 'emergency-diagnosis-support';
+    if (pathname === '/solutions/telemedicine-integration') return 'telemedicine-integration';
+    if (pathname === '/dashboard') return 'dashboard';
+
+    if (pathname.startsWith('/docs/')) {
+      const type = pathname.replace('/docs/', '').split('/')[0];
+      return docTypes.includes(type) ? type : 'feature-tour';
+    }
+
+    return 'landing';
+  };
+
+  const handleNavigate = (view) => {
+    const nextView = view === 'solutions' ? 'landing' : view;
+    setCurrentView(nextView);
+    const path = viewToPath(nextView);
+    if (location.pathname !== path) navigate(path);
+  };
+
+  // Sync URL -> currentView (back/forward, deep links)
+  useEffect(() => {
+    const nextView = pathToView(location.pathname);
+    setCurrentView((prev) => (prev === nextView ? prev : nextView));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
 
   useEffect(() => {
     let interval;
@@ -233,7 +313,7 @@ export default function App() {
       {currentView === 'splash' && (
         <SplashScreen key="splash" onComplete={() => {
           sessionStorage.setItem('hasSeenSplash', 'true');
-          setCurrentView('landing');
+          handleNavigate('landing');
         }} />
       )}
 
@@ -246,7 +326,7 @@ export default function App() {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="absolute inset-0 w-full min-h-screen bg-[#020617] z-40"
         >
-          <LandingPage onNavigate={setCurrentView} />
+          <LandingPage onNavigate={handleNavigate} />
         </motion.div>
       )}
 
@@ -259,7 +339,7 @@ export default function App() {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="absolute inset-0 w-full min-h-screen bg-[#020617] z-40"
         >
-          <PricingPage onNavigate={setCurrentView} />
+          <PricingPage onNavigate={handleNavigate} />
         </motion.div>
       )}
 
@@ -272,11 +352,76 @@ export default function App() {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="absolute inset-0 w-full min-h-screen bg-[#020617] z-40"
         >
-          <ContactPage onNavigate={setCurrentView} />
+          <ContactPage onNavigate={handleNavigate} />
         </motion.div>
       )}
 
-      {['feature-tour', 'documentation', 'api-reference', 'privacy', 'terms', 'hipaa'].includes(currentView) && (
+      {currentView === 'about' && (
+        <motion.div
+          key="about"
+          initial={{ opacity: 0, y: 40, filter: "blur(15px)" }}
+          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          exit={{ opacity: 0, y: -40, filter: "blur(15px)" }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="absolute inset-0 w-full min-h-screen bg-[#020617] z-40"
+        >
+          <AboutPage onNavigate={handleNavigate} />
+        </motion.div>
+      )}
+
+      {currentView === 'radiology-ai-assistant' && (
+        <motion.div
+          key="radiology-ai-assistant"
+          initial={{ opacity: 0, y: 40, filter: "blur(15px)" }}
+          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          exit={{ opacity: 0, y: -40, filter: "blur(15px)" }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="absolute inset-0 w-full min-h-screen bg-[#020617] z-40"
+        >
+          <RadiologyAIAssistantPage onNavigate={handleNavigate} />
+        </motion.div>
+      )}
+
+      {currentView === 'rural-clinics-low-resource-settings' && (
+        <motion.div
+          key="rural-clinics-low-resource-settings"
+          initial={{ opacity: 0, y: 40, filter: "blur(15px)" }}
+          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          exit={{ opacity: 0, y: -40, filter: "blur(15px)" }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="absolute inset-0 w-full min-h-screen bg-[#020617] z-40"
+        >
+          <RuralClinicsPage onNavigate={handleNavigate} />
+        </motion.div>
+      )}
+
+      {currentView === 'emergency-diagnosis-support' && (
+        <motion.div
+          key="emergency-diagnosis-support"
+          initial={{ opacity: 0, y: 40, filter: "blur(15px)" }}
+          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          exit={{ opacity: 0, y: -40, filter: "blur(15px)" }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="absolute inset-0 w-full min-h-screen bg-[#020617] z-40"
+        >
+          <EmergencyDiagnosisSupportPage onNavigate={handleNavigate} />
+        </motion.div>
+      )}
+
+      {currentView === 'telemedicine-integration' && (
+        <motion.div
+          key="telemedicine-integration"
+          initial={{ opacity: 0, y: 40, filter: "blur(15px)" }}
+          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          exit={{ opacity: 0, y: -40, filter: "blur(15px)" }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="absolute inset-0 w-full min-h-screen bg-[#020617] z-40"
+        >
+          <TelemedicineIntegrationPage onNavigate={handleNavigate} />
+        </motion.div>
+      )}
+
+      {docTypes.includes(currentView) && (
         <motion.div
           key={currentView}
           initial={{ opacity: 0, y: 40, filter: "blur(15px)" }}
@@ -285,7 +430,7 @@ export default function App() {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="absolute inset-0 w-full min-h-screen bg-[#020617] z-40"
         >
-          <DocumentPage type={currentView} onNavigate={setCurrentView} />
+          <DocumentPage type={currentView} onNavigate={handleNavigate} />
         </motion.div>
       )}
 
@@ -303,7 +448,7 @@ export default function App() {
             {/* Header with Mode Switcher */}
             <header className="flex flex-col md:flex-row items-center justify-between pb-6 border-b border-slate-800/60 gap-6">
               <div className="flex items-center gap-6 w-full md:w-auto">
-                <div className="flex items-center cursor-pointer" onClick={() => setCurrentView('landing')}>
+                <div className="flex items-center cursor-pointer" onClick={() => handleNavigate('landing')}>
                   <HyperionLogo horizontal={true} className="h-16 w-auto" />
                 </div>
               </div>
@@ -343,10 +488,24 @@ export default function App() {
                   className={`relative flex flex-col items-center justify-center w-full min-h-[450px] border border-slate-800 rounded-3xl transition-all duration-500 overflow-hidden backdrop-blur-xl shadow-2xl
                     ${isDragging ? 'bg-cyan-950/20 border-cyan-500/50 shadow-[0_0_30px_rgba(34,211,238,0.2)]' : 'bg-slate-900/40 hover:bg-slate-900/60 hover:border-slate-700'}
                     ${previewUrl ? 'p-0' : 'p-8'}
+                    ${!previewUrl ? 'cursor-pointer' : ''}
                   `}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
+                  role={!previewUrl ? 'button' : undefined}
+                  tabIndex={!previewUrl ? 0 : undefined}
+                  onClick={(e) => {
+                    if (previewUrl) return;
+                    if (e.target.closest('button')) return;
+                    openFilePicker();
+                  }}
+                  onKeyDown={(e) => {
+                    if (previewUrl) return;
+                    if (e.key !== 'Enter' && e.key !== ' ') return;
+                    e.preventDefault();
+                    openFilePicker();
+                  }}
                 >
                   {/* Subtle pulsing background glow when empty */}
                   {!previewUrl && (
@@ -394,7 +553,7 @@ export default function App() {
                       <h3 className="text-2xl font-inter font-semibold text-white mb-3">Initialize Scan Data</h3>
                       <p className="text-slate-500 mb-8 font-light text-sm">Drag & drop raw geometries (.png, .jpg)</p>
                       <button
-                        onClick={() => fileInputRef.current?.click()}
+                        onClick={openFilePicker}
                         className="px-8 py-3 rounded-full border border-slate-700 bg-slate-800/50 text-white font-inter font-semibold text-xs tracking-widest uppercase hover:bg-white hover:text-black hover:border-white transition-colors active:scale-95 cursor-pointer backdrop-blur-md"
                       >
                         Browse System
