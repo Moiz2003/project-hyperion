@@ -1,0 +1,13 @@
+{
+  "name": "project-hyperion",
+  "version": "1.0.0",
+  "description": "Project Hyperion Root",
+  "scripts": {
+    "install-all": "npm install && npm install --prefix server && npm install --prefix client",
+    "dev": "npx -y concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "start": "npx -y concurrently \"npm start --prefix server\" \"npm start --prefix client\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
