@@ -57,7 +57,7 @@ describe('POST /api/analyze-scan — input validation', () => {
 describe('POST /api/analyze-scan — successful pipeline', () => {
   test('vision → drafter → critic (clean) → 200 with full result shape', async () => {
     nock(VISION_URL).post('/v1/chat/completions').reply(200, makeChatResponse(VISION_RESPONSE))
-    nock(DRAFTER_URL).post('/v1/completions').reply(200, makeCompletionResponse(DRAFTER_RESPONSE))
+    nock(DRAFTER_URL).post('/v1/chat/completions').reply(200, makeChatResponse(DRAFTER_RESPONSE))
     nock(CRITIC_URL).post('/v1/chat/completions').reply(200, makeChatResponse(CRITIC_RESPONSE_CLEAN))
 
     const res = await request(app)
@@ -84,11 +84,11 @@ describe('POST /api/analyze-scan — adversarial consensus loop', () => {
   test('critic rejects once, then accepts on revision → 200', async () => {
     nock(VISION_URL).post('/v1/chat/completions').reply(200, makeChatResponse(VISION_RESPONSE))
     // Initial drafter call
-    nock(DRAFTER_URL).post('/v1/completions').reply(200, makeCompletionResponse(DRAFTER_RESPONSE))
+    nock(DRAFTER_URL).post('/v1/chat/completions').reply(200, makeChatResponse(DRAFTER_RESPONSE))
     // Critic rejects
     nock(CRITIC_URL).post('/v1/chat/completions').reply(200, makeChatResponse(CRITIC_RESPONSE_WITH_ISSUES))
     // Drafter revision
-    nock(DRAFTER_URL).post('/v1/completions').reply(200, makeCompletionResponse(DRAFTER_RESPONSE + '\n\nRevised.'))
+    nock(DRAFTER_URL).post('/v1/chat/completions').reply(200, makeChatResponse(DRAFTER_RESPONSE + '\n\nRevised.'))
     // Critic accepts on second pass
     nock(CRITIC_URL).post('/v1/chat/completions').reply(200, makeChatResponse(CRITIC_RESPONSE_CLEAN))
 
@@ -104,7 +104,7 @@ describe('POST /api/analyze-scan — adversarial consensus loop', () => {
 // ── Error scenarios ───────────────────────────────────────────────────────────
 
 describe('POST /api/analyze-scan — error scenarios', () => {
-  test('vision agent down (503) → 500 after retries', async () => {
+  test('vision agent down (503) → 206 partial with fallback text', async () => {
     nock(VISION_URL).post('/v1/chat/completions').times(3).reply(503, { error: 'Service Unavailable' })
 
     const res = await request(app)
@@ -112,11 +112,13 @@ describe('POST /api/analyze-scan — error scenarios', () => {
       .attach('xray_image', MINIMAL_JPEG, { filename: 'scan.jpg', contentType: 'image/jpeg' })
       .timeout(30000)
 
-    expect([500, 504]).toContain(res.status)
-    expect(res.body.status).toBe('error')
+    expect(res.status).toBe(206)
+    expect(res.body.status).toBe('partial')
+    expect(res.body.data).toHaveProperty('raw_findings')
+    expect(res.body.data).toHaveProperty('verified_report')
   }, 35000)
 
-  test('vision agent returns 429 (rate limited) → retries then fails', async () => {
+  test('vision agent returns 429 (rate limited) → 206 partial after retries', async () => {
     nock(VISION_URL).post('/v1/chat/completions').times(3).reply(429, { error: 'Too Many Requests' })
 
     const res = await request(app)
@@ -124,25 +126,29 @@ describe('POST /api/analyze-scan — error scenarios', () => {
       .attach('xray_image', MINIMAL_JPEG, { filename: 'scan.jpg', contentType: 'image/jpeg' })
       .timeout(30000)
 
-    expect([500, 504]).toContain(res.status)
+    expect(res.status).toBe(206)
+    expect(res.body.status).toBe('partial')
   }, 35000)
 
-  test('drafter agent unreachable → 500', async () => {
+  test('drafter agent unreachable → 206 partial with fallback draft', async () => {
     nock(VISION_URL).post('/v1/chat/completions').reply(200, makeChatResponse(VISION_RESPONSE))
-    nock(DRAFTER_URL).post('/v1/completions').times(3).replyWithError('ECONNREFUSED')
+    nock(DRAFTER_URL).post('/v1/chat/completions').times(3).replyWithError('ECONNREFUSED')
 
     const res = await request(app)
       .post('/api/analyze-scan')
       .attach('xray_image', MINIMAL_JPEG, { filename: 'scan.jpg', contentType: 'image/jpeg' })
       .timeout(30000)
 
-    expect([500, 504]).toContain(res.status)
+    expect(res.status).toBe(206)
+    expect(res.body.status).toBe('partial')
+    // Vision succeeded so raw_findings should contain real data
+    expect(res.body.data.raw_findings).toMatch(/consolidation|lung|chest/i)
   }, 35000)
 
   test('critic agent returns malformed JSON metadata → uses fallback values', async () => {
     const malformedCritic = `### Issues Found\nNone\n\n### Verified Report\nGood report.\n\n### Metadata\n\`\`\`json\n{ invalid json }\n\`\`\``
     nock(VISION_URL).post('/v1/chat/completions').reply(200, makeChatResponse(VISION_RESPONSE))
-    nock(DRAFTER_URL).post('/v1/completions').reply(200, makeCompletionResponse(DRAFTER_RESPONSE))
+    nock(DRAFTER_URL).post('/v1/chat/completions').reply(200, makeChatResponse(DRAFTER_RESPONSE))
     nock(CRITIC_URL).post('/v1/chat/completions').reply(200, makeChatResponse(malformedCritic))
 
     const res = await request(app)

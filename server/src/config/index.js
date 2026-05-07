@@ -13,6 +13,9 @@ const CONFIG = {
   visionModel:    process.env.VISION_MODEL       || 'OpenGVLab/InternVL-Chat-V1-5-AWQ',
   criticModel:    process.env.CRITIC_MODEL       || 'casperhansen/llama-3-70b-instruct-awq',
 
+  // Dual-Engine mode
+  demoMode: process.env.DEMO_MODE === 'true' || process.env.DEMO_MODE === '1',
+
   // Pipeline
   maxConsensusIterations: parseInt(process.env.MAX_CONSENSUS_ITERATIONS || '3', 10),
   pipelineTimeoutMs:      parseInt(process.env.PIPELINE_TIMEOUT_MS || '240000', 10),

@@ -6,29 +6,57 @@ const { logger } = require('../utils/logger')
 const { withRetry } = require('../utils/retry')
 const { getPrompts, PROMPT_VERSION } = require('../prompts')
 
-// Uses /v1/completions + explicit LLaMA-2 instruct format.
-// Meditron (LLaMA-2 based) has no chat_template in transformers ≥ v4.44.
 const client = new OpenAI({ baseURL: CONFIG.drafterUrl, apiKey: 'local' })
 
-async function runDrafterAgent(rawFindings, criticFeedback = null, requestId) {
-  const log = logger.child({ requestId, agent: 'drafter', promptVersion: PROMPT_VERSION, revision: criticFeedback != null })
-  const { drafter: drafterPrompt } = getPrompts()
-  const instruction = drafterPrompt(rawFindings, criticFeedback)
+async function runDrafterAgent(rawFindings, criticFeedback = null, requestId, { simplified = false } = {}) {
+  const isRevision = criticFeedback != null
+  const log = logger.child({ requestId, agent: 'drafter', promptVersion: PROMPT_VERSION, revision: isRevision, simplified })
+
+  let instruction
+  if (simplified) {
+    instruction = [
+      'You are a clinical AI assistant.',
+      'Write a brief structured clinical assessment for the imaging findings below.',
+      'Include: Summary of Findings, Differential Diagnosis, and Recommendations.',
+      '',
+      `Imaging Findings:\n${rawFindings}`,
+    ].join('\n')
+  } else if (isRevision) {
+    instruction = [
+      'You are a Lead Radiologist and Clinical AI. You are revising a prior draft.',
+      '',
+      '[SECTION: ORIGINAL IMAGING FINDINGS]',
+      rawFindings,
+      '',
+      '[SECTION: CRITIC FEEDBACK]',
+      criticFeedback,
+      '',
+      '[SECTION: TASK]',
+      'Revise the clinical assessment to fix every issue raised by the critic above.',
+      'Keep all sections: Summary of Findings, Differential Diagnosis, Recommended Workup, Red Flags, Patient-Facing Summary.',
+      'Do not restate the critic feedback. Only output the corrected report.',
+    ].join('\n')
+  } else {
+    const { drafter: drafterPrompt } = getPrompts()
+    instruction = drafterPrompt(rawFindings, null)
+  }
+
+  console.log(`[DEBUG] [DrafterAgent] Prompt:\n${instruction}`)
+  console.log(`[DEBUG] [DrafterAgent] starting inference... revision=${isRevision} simplified=${simplified}`)
 
   return withRetry(async () => {
     const t0 = Date.now()
-    const completion = await client.completions.create({
+    const completion = await client.chat.completions.create({
       model: CONFIG.drafterModel,
-      prompt: `<s>[INST] ${instruction} [/INST]`,
-      max_tokens: 2048,
-      temperature: 0.2,
-      stop: ['</s>', '[INST]'],
+      messages: [{ role: 'user', content: instruction }],
+      max_tokens: 512,
+      temperature: 0.1,
     })
     const elapsed = ((Date.now() - t0) / 1000).toFixed(2)
-    const text = completion.choices[0].text.trim()
+    const text = completion.choices[0].message.content.trim()
     log.info({ elapsed: `${elapsed}s`, chars: text.length }, 'Drafter agent completed')
     return text
-  }, { maxRetries: 3, baseDelayMs: 2000, log, label: 'DrafterAgent' })
+  }, { maxRetries: simplified ? 0 : 3, baseDelayMs: 2000, log, label: 'DrafterAgent' })
 }
 
 module.exports = { runDrafterAgent }

@@ -14,6 +14,8 @@ async function runCriticAgent(draftAssessment, rawFindings, requestId) {
   const { critic: criticPrompt } = getPrompts()
   const { system, user } = criticPrompt(draftAssessment, rawFindings)
 
+  console.log('[DEBUG] [CriticAgent] starting inference...')
+
   const raw = await withRetry(async () => {
     const t0 = Date.now()
     const completion = await client.chat.completions.create({
@@ -22,8 +24,9 @@ async function runCriticAgent(draftAssessment, rawFindings, requestId) {
         { role: 'system', content: system },
         { role: 'user', content: user },
       ],
-      max_tokens: 2048,
+      max_tokens: 512,
       temperature: 0.1,
+      stop: ['User:', 'Assistant:', '<|eot_id|>'],
     })
     const elapsed = ((Date.now() - t0) / 1000).toFixed(2)
     const text = completion.choices[0].message.content.trim()
@@ -53,7 +56,6 @@ function parseCriticOutput(text, log) {
     }
   }
 
-  // Fallback rejection detection from Issues Found section
   if (!rejected) {
     const issuesMatch = text.match(/###\s*Issues Found\s*\n([\s\S]*?)(?=###|$)/)
     if (issuesMatch) {
