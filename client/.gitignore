@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+<<<<<<< HEAD
+=======
+.vercel
+>>>>>>> 784556f (pre-swarm logic sync)
