@@ -7,6 +7,7 @@ import PricingPage from './PricingPage'
 import DocumentPage from './DocumentPage'
 import ContactPage from './ContactPage'
 import Dashboard from './pages/Dashboard'
+import AnalyticsPage from './pages/AnalyticsPage'
 import ErrorBoundary from './components/ErrorBoundary'
 
 const PAGE_TRANSITION = {
@@ -92,6 +93,20 @@ function DashboardRoute() {
   )
 }
 
+function AnalyticsRoute() {
+  return (
+    <motion.div
+      key="analytics"
+      initial={{ opacity: 0, y: 40, filter: 'blur(15px)' }}
+      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.8, ease: 'easeOut' }}
+    >
+      <AnalyticsPage />
+    </motion.div>
+  )
+}
+
 function AppRoutes() {
   const location = useLocation()
   return (
@@ -99,6 +114,7 @@ function AppRoutes() {
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<RootRoute />} />
         <Route path="/dashboard" element={<DashboardRoute />} />
+        <Route path="/analytics" element={<AnalyticsRoute />} />
         <Route path="/pricing" element={<PricingRoute />} />
         <Route path="/contact" element={<ContactRoute />} />
         <Route path="/docs/:type" element={<DocRoute />} />

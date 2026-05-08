@@ -16,6 +16,7 @@ export default class ErrorBoundary extends Component {
 
   render() {
     if (!this.state.hasError) return this.props.children
+    if (this.props.fallback) return this.props.fallback
 
     return (
       <div className="min-h-screen bg-[#020617] flex items-center justify-center p-8">

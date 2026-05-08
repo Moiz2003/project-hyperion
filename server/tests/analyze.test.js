@@ -5,7 +5,7 @@ const nock = require('nock')
 const app = require('../src/app')
 const {
   VISION_RESPONSE, DRAFTER_RESPONSE, CRITIC_RESPONSE_CLEAN, CRITIC_RESPONSE_WITH_ISSUES,
-  MINIMAL_JPEG, makeChatResponse, makeCompletionResponse,
+  MINIMAL_JPEG, makeChatResponse,
 } = require('./fixtures/agentResponses')
 
 // Prevent real HTTP calls to vLLM

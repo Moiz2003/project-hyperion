@@ -26,6 +26,7 @@ async function runVisionAgent(imageBuffer, requestId) {
       }],
       max_tokens: 1024,
       temperature: 0.1,
+      timeout: 60000,
     })
     const elapsed = ((Date.now() - t0) / 1000).toFixed(2)
     const text = completion.choices[0].message.content.trim()

@@ -6,7 +6,7 @@ const { logger } = require('../utils/logger')
 
 async function listScans(req, res) {
   if (!isMongoConnected()) {
-    return res.status(503).json({ status: 'error', message: 'Persistence unavailable' })
+    return res.status(200).json({ status: 'success', data: [] })
   }
   try {
     const scans = await ScanResult.find({})

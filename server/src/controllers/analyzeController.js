@@ -35,7 +35,6 @@ async function analyzeScan(req, res, next) {
   const demoMode = isDemoMode(req)
 
   log.info({ demoMode }, 'Pipeline starting')
-  console.log(`[DEBUG] [Controller] mode=${demoMode ? 'DEMO' : 'PRODUCTION'} requestId=${requestId}`)
 
   const imageBuffer = req.file.buffer
   const imageHash = crypto.createHash('sha256').update(imageBuffer).digest('hex')
@@ -50,10 +49,13 @@ async function analyzeScan(req, res, next) {
           status: 'success',
           data: {
             raw_findings: cached.rawFindings,
+            initial_draft: cached.initialDraft || cached.verifiedReport,
             verified_report: cached.verifiedReport,
             urgency_flag: cached.urgencyFlag,
             recommended_dept: cached.recommendedDept,
             critic_interventions: cached.criticInterventions,
+            agent_timings: null,
+            partial: cached.partial || false,
           },
           processing_latency: '0.00s (cached)',
           requestId,
@@ -107,10 +109,13 @@ async function analyzeScan(req, res, next) {
       imageHash,
       promptVersion: PROMPT_VERSION,
       rawFindings: pipelineResult.rawFindings,
+      initialDraft: pipelineResult.initialDraft,
       verifiedReport: pipelineResult.verifiedReport,
       urgencyFlag: pipelineResult.urgencyFlag,
       recommendedDept: pipelineResult.recommendedDept,
       criticInterventions: pipelineResult.totalInterventions,
+      partial: pipelineResult.partial,
+      processingLatency: `${elapsed}s`,
     }).catch(err => log.warn({ err: err.message }, 'Failed to persist scan result'))
   }
 
@@ -125,10 +130,13 @@ async function analyzeScan(req, res, next) {
     ...(pipelineResult.partial && { message: 'One or more agents returned a degraded response. Partial analysis shown.' }),
     data: {
       raw_findings: pipelineResult.rawFindings,
+      initial_draft: pipelineResult.initialDraft,
       verified_report: pipelineResult.verifiedReport,
       urgency_flag: pipelineResult.urgencyFlag,
       recommended_dept: pipelineResult.recommendedDept,
       critic_interventions: pipelineResult.totalInterventions,
+      agent_timings: pipelineResult.agentTimings,
+      partial: pipelineResult.partial,
     },
     processing_latency: `${elapsed}s`,
     requestId,
@@ -136,39 +144,59 @@ async function analyzeScan(req, res, next) {
   })
 }
 
-async function runPipeline(imageBuffer, imageHash, requestId, log, demoMode) {
+async function runPipeline(imageBuffer, imageHash, requestId, log, demoMode, emit = () => {}) {
   const maxIterations = demoMode ? DEMO_MAX_ITERATIONS : PROD_MAX_ITERATIONS
   let partial = false
+  const agentTimings = {}
 
   // Stage 1: Vision
-  console.log('[DEBUG] [VisionAgent] starting inference...')
   log.info('Stage 1: Vision agent')
+  emit('agent_start', { agent: 'vision', label: 'Vision Agent', detail: 'Scanning image geometry...' })
   let rawFindings
   try {
+    const t = Date.now()
     rawFindings = await runVisionAgent(imageBuffer, requestId)
+    agentTimings.vision = `${((Date.now() - t) / 1000).toFixed(2)}s`
     if (!isViable(rawFindings)) throw new Error(`Vision returned degenerate output (${rawFindings?.length ?? 0} chars)`)
+    emit('agent_done', { agent: 'vision', elapsed: agentTimings.vision, chars: rawFindings.length, preview: rawFindings.slice(0, 200) })
   } catch (err) {
     log.warn({ err: err.message }, 'Vision agent failed — using fallback')
     rawFindings = 'Vision analysis unavailable. Manual review required.'
+    agentTimings.vision = 'failed'
     partial = true
+    emit('agent_failed', { agent: 'vision', error: err.message })
   }
 
   // Stage 2: Initial draft
   log.info({ demoMode, maxIterations }, 'Stage 2: Adversarial consensus loop')
+  emit('agent_start', { agent: 'drafter', label: 'Drafter Agent', detail: 'Composing preliminary clinical assessment...' })
   let draftReport
+  let initialDraft
   try {
+    const t = Date.now()
     draftReport = await runDrafterAgent(rawFindings, null, requestId)
+    agentTimings.drafter = `${((Date.now() - t) / 1000).toFixed(2)}s`
     if (!isViable(draftReport)) throw new Error(`Drafter returned degenerate output (${draftReport?.length ?? 0} chars)`)
+    initialDraft = draftReport
+    emit('agent_done', { agent: 'drafter', elapsed: agentTimings.drafter, chars: draftReport.length })
   } catch (err) {
     log.warn({ err: err.message }, 'Drafter agent failed — retrying with simplified prompt')
+    emit('agent_retry', { agent: 'drafter', detail: 'Retrying with simplified prompt...' })
     try {
+      const t = Date.now()
       draftReport = await runDrafterAgent(rawFindings, null, requestId, { simplified: true })
+      agentTimings.drafter = `${((Date.now() - t) / 1000).toFixed(2)}s (simplified)`
       if (!isViable(draftReport)) throw new Error(`Simplified drafter returned degenerate output (${draftReport?.length ?? 0} chars)`)
       log.info('Simplified drafter retry succeeded')
+      initialDraft = draftReport
+      emit('agent_done', { agent: 'drafter', elapsed: agentTimings.drafter, chars: draftReport.length, simplified: true })
     } catch (retryErr) {
       log.warn({ err: retryErr.message }, 'Simplified drafter retry failed — using text fallback')
       draftReport = `Preliminary findings from imaging: ${rawFindings}`
+      initialDraft = draftReport
+      agentTimings.drafter = 'failed'
       partial = true
+      emit('agent_failed', { agent: 'drafter', error: retryErr.message })
     }
   }
 
@@ -176,42 +204,62 @@ async function runPipeline(imageBuffer, imageHash, requestId, log, demoMode) {
   let urgencyFlag = 'Moderate'
   let recommendedDept = 'General Medicine'
   let totalInterventions = 0
+  const criticTimings = []
 
   // Stage 3: Adversarial loop (skipped after first critic pass in demo mode)
   for (let i = 0; i < maxIterations; i++) {
+    const iteration = i + 1
+    emit('agent_start', {
+      agent: 'critic',
+      label: `Critic Agent (pass ${iteration})`,
+      detail: iteration === 1 ? 'Verifying draft against raw findings...' : 'Re-evaluating revised report...',
+      iteration,
+    })
+
     let criticResult
     try {
+      const t = Date.now()
       criticResult = await runCriticAgent(draftReport, rawFindings, requestId)
+      const elapsed = `${((Date.now() - t) / 1000).toFixed(2)}s`
+      criticTimings.push(elapsed)
       if (!isViable(criticResult.verifiedReport)) throw new Error('Critic returned degenerate report')
+
+      urgencyFlag = criticResult.urgencyFlag
+      recommendedDept = criticResult.recommendedDept
+
+      if (!criticRejected(criticResult) || demoMode) {
+        log.info({ iteration, demoMode }, 'Consensus accepted')
+        verifiedReport = criticResult.verifiedReport
+        emit('critic_accepted', { agent: 'critic', elapsed, iteration, urgency_flag: urgencyFlag, recommended_dept: recommendedDept, interventions: totalInterventions })
+        break
+      }
+
+      totalInterventions += criticResult.interventionsMade
+      log.info({ iteration, issues: criticResult.issuesFound }, 'Critic rejected — revising')
+      emit('critic_rejected', { agent: 'critic', elapsed, iteration, issues: criticResult.issuesFound, interventions: totalInterventions })
     } catch (err) {
-      log.warn({ err: err.message, iteration: i + 1 }, 'Critic agent failed — keeping current draft')
+      log.warn({ err: err.message, iteration }, 'Critic agent failed — keeping current draft')
       partial = true
+      emit('agent_failed', { agent: 'critic', error: err.message, iteration })
       break
     }
-
-    urgencyFlag = criticResult.urgencyFlag
-    recommendedDept = criticResult.recommendedDept
-    totalInterventions += criticResult.interventionsMade
-
-    if (!criticRejected(criticResult) || demoMode) {
-      // Demo mode: always accept after first critic pass, no revision
-      log.info({ iteration: i + 1, demoMode }, 'Consensus accepted')
-      verifiedReport = criticResult.verifiedReport
-      break
-    }
-
-    log.info({ iteration: i + 1, issues: criticResult.issuesFound }, 'Critic rejected — revising')
 
     if (i < maxIterations - 1) {
+      emit('agent_start', { agent: 'drafter', label: 'Drafter Agent (revision)', detail: 'Incorporating critic feedback...', revision: true, iteration })
       try {
+        const t = Date.now()
         const revised = await runDrafterAgent(rawFindings, criticResult.issuesFound, requestId)
+        const elapsed = `${((Date.now() - t) / 1000).toFixed(2)}s`
+        agentTimings.drafterRevision = elapsed
         if (!isViable(revised)) throw new Error(`Revision degenerate (${revised?.length ?? 0} chars)`)
         draftReport = revised
         verifiedReport = draftReport
+        emit('agent_done', { agent: 'drafter', elapsed, chars: revised.length, revision: true, iteration })
       } catch (err) {
         log.warn({ err: err.message }, 'Drafter revision failed — keeping critic corrected report')
         verifiedReport = criticResult.verifiedReport
         partial = true
+        emit('agent_failed', { agent: 'drafter', error: err.message, revision: true, iteration })
         break
       }
     } else {
@@ -220,7 +268,9 @@ async function runPipeline(imageBuffer, imageHash, requestId, log, demoMode) {
     }
   }
 
-  return { rawFindings, verifiedReport, urgencyFlag, recommendedDept, totalInterventions, partial }
+  if (criticTimings.length > 0) agentTimings.critic = criticTimings.join(', ')
+
+  return { rawFindings, initialDraft, verifiedReport, urgencyFlag, recommendedDept, totalInterventions, partial, agentTimings }
 }
 
-module.exports = { analyzeScan }
+module.exports = { analyzeScan, runPipeline }

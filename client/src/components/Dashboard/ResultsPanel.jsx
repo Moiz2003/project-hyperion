@@ -1,12 +1,30 @@
+import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import HUDIcons from './HUDIcons'
 import LoadingOverlay from './LoadingOverlay'
+
+function confidenceScore(results) {
+  if (results.partial) return '62%'
+  if (results.critic_interventions === 0) return '98%'
+  return `${Math.max(70, 100 - (results.critic_interventions * 9))}%`
+}
+
+function confidenceTooltip(results) {
+  if (results.partial) return 'Partial pipeline — one or more agents degraded'
+  if (results.critic_interventions === 0) return 'Zero critic interventions — consensus on first pass'
+  return `${results.critic_interventions} critic intervention${results.critic_interventions !== 1 ? 's' : ''} · formula: max(70, 100 − n×9)`
+}
 
 export default function ResultsPanel({
   results, isLoading, loadingText, isRevealed, engineMode,
   residentInput, onResidentInput, hint, isHintLoading,
   onRequestHint, onReveal, onDownloadPDF,
 }) {
+  const [showComparison, setShowComparison] = useState(false)
+
+  const hasDiff = results && results.initial_draft &&
+    results.initial_draft !== results.verified_report
+
   return (
     <div className="flex flex-col gap-6 relative">
       <div className="flex items-center justify-between mb-2">
@@ -14,11 +32,25 @@ export default function ResultsPanel({
           <HUDIcons.Check />
           <h2 className="text-sm font-inter font-semibold tracking-widest uppercase text-slate-300">Swarm Output</h2>
         </div>
-        {engineMode === 'discovery' && results && !isRevealed && (
-          <span className="text-[10px] font-inter font-bold tracking-widest uppercase text-indigo-400 border border-indigo-500/30 px-3 py-1 rounded-full bg-indigo-950/30 shadow-[0_0_10px_rgba(99,102,241,0.2)] animate-pulse">
-            Discovery Mode Active
-          </span>
-        )}
+        <div className="flex items-center gap-3">
+          {hasDiff && !isLoading && (
+            <button
+              onClick={() => setShowComparison(v => !v)}
+              className={`text-[10px] font-bold tracking-widest uppercase px-3 py-1 rounded-full border transition-all ${
+                showComparison
+                  ? 'bg-amber-950/40 border-amber-500/50 text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.3)]'
+                  : 'border-slate-700 text-slate-500 hover:text-slate-300 hover:border-slate-600'
+              }`}
+            >
+              {showComparison ? 'Hide Diff' : 'Before / After'}
+            </button>
+          )}
+          {engineMode === 'discovery' && results && !isRevealed && (
+            <span className="text-[10px] font-inter font-bold tracking-widest uppercase text-indigo-400 border border-indigo-500/30 px-3 py-1 rounded-full bg-indigo-950/30 shadow-[0_0_10px_rgba(99,102,241,0.2)] animate-pulse">
+              Discovery Mode Active
+            </span>
+          )}
+        </div>
       </div>
 
       <div className={`flex-1 relative rounded-3xl border transition-colors duration-500 overflow-hidden backdrop-blur-xl shadow-2xl
@@ -127,10 +159,35 @@ export default function ResultsPanel({
                 </div>
               </div>
 
+              {/* Before/After Comparison */}
+              <AnimatePresence>
+                {showComparison && hasDiff && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="space-y-3 overflow-hidden"
+                  >
+                    <h4 className="text-xs font-bold text-amber-500 uppercase tracking-widest flex items-center gap-3">
+                      <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)]"></div>
+                      Initial Draft (Pre-Critic)
+                    </h4>
+                    <div className="p-6 rounded-2xl bg-amber-950/10 border border-amber-500/20 text-slate-400 font-medium text-sm leading-relaxed relative overflow-hidden">
+                      <div className="absolute top-0 left-0 w-1 h-full bg-amber-500/50"></div>
+                      <div className="text-[10px] font-mono text-amber-600 uppercase tracking-widest mb-3">Before Critic Review</div>
+                      {results.initial_draft}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <div className="space-y-4">
                 <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(52,211,153,0.8)]"></div>
                   Final Verified Consensus
+                  {showComparison && hasDiff && (
+                    <span className="text-[9px] font-bold text-emerald-600 border border-emerald-700 px-2 py-0.5 rounded-full">After Critic Review</span>
+                  )}
                 </h4>
                 <div className="p-6 rounded-2xl bg-indigo-950/20 border border-indigo-500/30 text-slate-200 font-medium text-lg leading-relaxed relative overflow-hidden shadow-[0_0_30px_rgba(99,102,241,0.05)]">
                   <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,1)]"></div>
@@ -138,13 +195,27 @@ export default function ResultsPanel({
                 </div>
               </div>
 
+              {/* Agent timings */}
+              {results.agent_timings && (
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(results.agent_timings).map(([k, v]) => (
+                    <span key={k} className="text-[10px] font-mono px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-slate-500">
+                      <span className="text-slate-600">{k}:</span> <span className="text-slate-400">{v}</span>
+                    </span>
+                  ))}
+                </div>
+              )}
+
               <div className="pt-6 border-t border-slate-800/50 flex items-center justify-between text-xs font-mono uppercase tracking-widest">
                 <span className="text-slate-500">
                   Critic Interventions: <strong className="text-cyan-400 font-inter font-bold text-sm ml-2">{results.critic_interventions}</strong>
                 </span>
                 <div className="flex items-center gap-4">
-                  <span className="text-slate-500 flex items-center gap-2">
-                    Confidence: <strong className="text-emerald-400 text-sm">100%</strong>
+                  <span className="relative group flex items-center gap-2 text-slate-500 cursor-default">
+                    Confidence: <strong className="text-emerald-400 text-sm">{confidenceScore(results)}</strong>
+                    <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-[10px] font-mono text-slate-400 leading-relaxed opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 shadow-xl whitespace-normal text-center">
+                      {confidenceTooltip(results)}
+                    </div>
                   </span>
                   <button
                     onClick={onDownloadPDF}

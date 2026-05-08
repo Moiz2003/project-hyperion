@@ -88,17 +88,6 @@ function makeChatResponse(content) {
   }
 }
 
-function makeCompletionResponse(text) {
-  return {
-    id: 'cmpl-test',
-    object: 'text_completion',
-    created: Math.floor(Date.now() / 1000),
-    model: 'test-model',
-    choices: [{ index: 0, text, finish_reason: 'stop' }],
-    usage: { prompt_tokens: 100, completion_tokens: 200, total_tokens: 300 },
-  }
-}
-
 module.exports = {
   VISION_RESPONSE,
   DRAFTER_RESPONSE,
@@ -106,5 +95,4 @@ module.exports = {
   CRITIC_RESPONSE_WITH_ISSUES,
   MINIMAL_JPEG,
   makeChatResponse,
-  makeCompletionResponse,
 }

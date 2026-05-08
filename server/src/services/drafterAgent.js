@@ -41,16 +41,14 @@ async function runDrafterAgent(rawFindings, criticFeedback = null, requestId, { 
     instruction = drafterPrompt(rawFindings, null)
   }
 
-  console.log(`[DEBUG] [DrafterAgent] Prompt:\n${instruction}`)
-  console.log(`[DEBUG] [DrafterAgent] starting inference... revision=${isRevision} simplified=${simplified}`)
-
   return withRetry(async () => {
     const t0 = Date.now()
     const completion = await client.chat.completions.create({
       model: CONFIG.drafterModel,
       messages: [{ role: 'user', content: instruction }],
-      max_tokens: 512,
+      max_tokens: 1536,
       temperature: 0.1,
+      timeout: 45000,
     })
     const elapsed = ((Date.now() - t0) / 1000).toFixed(2)
     const text = completion.choices[0].message.content.trim()

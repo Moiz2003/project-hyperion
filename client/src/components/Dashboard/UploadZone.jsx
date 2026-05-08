@@ -4,7 +4,7 @@ import HUDIcons from './HUDIcons'
 
 export default function UploadZone({
   file, previewUrl, isDragging, isLoading, error, engineMode,
-  onFileSelect, onDragOver, onDragLeave, onDrop, onClear, onAnalyze,
+  onFileSelect, onDragOver, onDragLeave, onDrop, onClear, onAnalyze, onLoadDemo,
 }) {
   const fileInputRef = useRef(null)
 
@@ -66,12 +66,22 @@ export default function UploadZone({
             </div>
             <h3 className="text-2xl font-inter font-semibold text-white mb-3">Initialize Scan Data</h3>
             <p className="text-slate-500 mb-8 font-light text-sm">Drag & drop raw geometries (.png, .jpg)</p>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="px-8 py-3 rounded-full border border-slate-700 bg-slate-800/50 text-white font-inter font-semibold text-xs tracking-widest uppercase hover:bg-white hover:text-black hover:border-white transition-colors active:scale-95 cursor-pointer backdrop-blur-md"
-            >
-              Browse System
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="px-8 py-3 rounded-full border border-slate-700 bg-slate-800/50 text-white font-inter font-semibold text-xs tracking-widest uppercase hover:bg-white hover:text-black hover:border-white transition-colors active:scale-95 cursor-pointer backdrop-blur-md"
+              >
+                Browse System
+              </button>
+              {onLoadDemo && (
+                <button
+                  onClick={onLoadDemo}
+                  className="px-5 py-3 rounded-full border border-cyan-900/50 text-cyan-700 font-inter font-semibold text-xs tracking-widest uppercase hover:border-cyan-500/50 hover:text-cyan-400 transition-colors active:scale-95 cursor-pointer"
+                >
+                  Load Demo Scan
+                </button>
+              )}
+            </div>
             <input
               type="file"
               ref={fileInputRef}

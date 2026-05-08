@@ -14,8 +14,6 @@ async function runCriticAgent(draftAssessment, rawFindings, requestId) {
   const { critic: criticPrompt } = getPrompts()
   const { system, user } = criticPrompt(draftAssessment, rawFindings)
 
-  console.log('[DEBUG] [CriticAgent] starting inference...')
-
   const raw = await withRetry(async () => {
     const t0 = Date.now()
     const completion = await client.chat.completions.create({
@@ -27,6 +25,7 @@ async function runCriticAgent(draftAssessment, rawFindings, requestId) {
       max_tokens: 512,
       temperature: 0.1,
       stop: ['User:', 'Assistant:', '<|eot_id|>'],
+      timeout: 45000,
     })
     const elapsed = ((Date.now() - t0) / 1000).toFixed(2)
     const text = completion.choices[0].message.content.trim()
@@ -56,19 +55,15 @@ function parseCriticOutput(text, log) {
     }
   }
 
-  if (!rejected) {
-    const issuesMatch = text.match(/###\s*Issues Found\s*\n([\s\S]*?)(?=###|$)/)
-    if (issuesMatch) {
-      const issuesText = issuesMatch[1].trim()
-      rejected = issuesText.toLowerCase() !== 'none' && issuesText.length > 4
-    }
+  const issuesMatch = text.match(/###\s*Issues Found\s*\n([\s\S]*?)(?=###|$)/)
+  const issuesFound = issuesMatch ? issuesMatch[1].trim() : ''
+
+  if (!rejected && issuesFound) {
+    rejected = issuesFound.toLowerCase() !== 'none' && issuesFound.length > 4
   }
 
   const reportMatch = text.match(/###\s*Verified Report\s*\n([\s\S]*?)(?=###\s*Metadata|$)/)
   const verifiedReport = reportMatch ? reportMatch[1].trim() : text
-
-  const issuesMatch = text.match(/###\s*Issues Found\s*\n([\s\S]*?)(?=###|$)/)
-  const issuesFound = issuesMatch ? issuesMatch[1].trim() : ''
 
   return { verifiedReport, issuesFound, urgencyFlag, recommendedDept, interventionsMade, rejected }
 }

@@ -10,6 +10,7 @@ const healthRoutes = require('./routes/health')
 const scansRoutes = require('./routes/scans')
 const analyzeRoutes = require('./routes/analyze')
 const checkoutRoutes = require('./routes/checkout')
+const analyticsRoutes = require('./routes/analytics')
 
 const app = express()
 
@@ -32,6 +33,7 @@ app.use((req, _res, next) => {
 app.use('/health', healthRoutes)
 app.use('/api/scans', scansRoutes)
 app.use('/api/analyze-scan', analyzeRoutes)
+app.use('/api/analytics', analyticsRoutes)
 app.use('/api', checkoutRoutes)
 
 app.use(notFound)
