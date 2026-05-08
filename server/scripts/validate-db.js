@@ -84,8 +84,12 @@ async function attemptConnect(uri, options, label) {
 async function validateDatabase(conn) {
     console.log('\n[VALIDATE] ── Validating Database ──')
 
+    // conn is a Mongoose NativeConnection; conn.db is the native Db object
+    // already scoped to the connection's database (hyperion)
+    const db = conn.db
+
     // 1. List all databases to confirm 'hyperion' exists
-    const adminDb = conn.db.admin()
+    const adminDb = db.admin()
     const dbInfo = await adminDb.listDatabases()
     const dbNames = dbInfo.databases.map(d => d.name)
     console.log(`[VALIDATE] Databases found: ${dbNames.join(', ') || '(none)'}`)
@@ -97,15 +101,14 @@ async function validateDatabase(conn) {
         console.log('[VALIDATE] ⚠️  "hyperion" database not yet created (will be auto-created on first write)')
     }
 
-    // 2. Verify we can read from the hyperion database
-    const hyperionDb = conn.db('hyperion')
-    const collections = await hyperionDb.listCollections().toArray()
+    // 2. List collections in the hyperion database (db is already scoped to it)
+    const collections = await db.listCollections().toArray()
     const collectionNames = collections.map(c => c.name)
     console.log(`[VALIDATE] Collections in "hyperion": ${collectionNames.join(', ') || '(none — fresh database)'}`)
 
     // 3. Test write capability (write then immediately delete)
     console.log('[VALIDATE] Testing write/read cycle...')
-    const testCollection = hyperionDb.collection('_validation_test')
+    const testCollection = db.collection('_validation_test')
     const testDoc = {
         _test: true,
         createdAt: new Date(),
