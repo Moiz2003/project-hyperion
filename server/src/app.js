@@ -18,9 +18,29 @@ const app = express()
 // Security headers — must be before CORS
 app.use(helmet())
 
-// CORS: restrict origin in production via CORS_ORIGIN env var
+// CORS: dynamic origin list from CORS_ORIGIN env var (comma-separated)
+// Falls back to localhost + Vercel production for safety
+const ALLOWED_ORIGINS = (process.env.CORS_ORIGIN || '')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean)
+const DEFAULT_ORIGINS = [
+  'http://localhost:5173',
+  'https://project-hyperion-nine.vercel.app',
+]
+const allowedOrigins = ALLOWED_ORIGINS.length > 0 ? ALLOWED_ORIGINS : DEFAULT_ORIGINS
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
+  origin(origin, callback) {
+    // Allow requests with no origin (server-to-server, curl, etc.)
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true)
+    } else {
+      logger.warn({ origin }, 'CORS blocked origin')
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
+  credentials: true,
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }))
