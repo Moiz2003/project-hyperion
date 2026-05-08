@@ -5,7 +5,7 @@
             "headers": [
                 {
                     "key": "Content-Security-Policy",
-                    "value": "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://project-hyperion-nine.vercel.app; object-src 'none';"
+                    "value": "default-src * 'unsafe-inline' 'unsafe-eval'; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src * 'unsafe-inline';"
                 }
             ]
         }
