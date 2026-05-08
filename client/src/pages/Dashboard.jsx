@@ -282,15 +282,21 @@ export default function Dashboard() {
       if (e.key === 'Escape' && (file || results)) clearSelection()
     }
     window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [file, isLoading, results, engineMode, fileSizeError, analyzeScan])
+
+  // Abort any in-flight SSE stream on real unmount only.
+  // (Was previously bundled with the keyboard-shortcut effect, whose
+  // cleanup re-ran on every isLoading flip — aborting the fetch ~28ms
+  // after it started, before the server could respond.)
+  useEffect(() => {
     return () => {
-      window.removeEventListener('keydown', handler)
-      // Abort any in-flight SSE stream on unmount
       if (abortRef.current) {
         abortRef.current.abort()
         abortRef.current = null
       }
     }
-  }, [file, isLoading, results, engineMode, fileSizeError, analyzeScan])
+  }, [])
 
   const requestHint = () => {
     setIsHintLoading(true)
