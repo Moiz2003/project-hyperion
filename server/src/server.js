@@ -1,5 +1,8 @@
 'use strict'
 
+// Load .env before anything else
+try { require('dotenv').config() } catch (_) { /* dotenv optional in production */ }
+
 const { CONFIG, validateConfig } = require('./config')
 const { connectMongo } = require('./db')
 const { logger } = require('./utils/logger')
@@ -21,6 +24,12 @@ async function boot() {
       'Hyperion server started'
     )
   })
+
+  // Prevent Node.js from closing idle SSE sockets prematurely
+  // headersTimeout must be 0 for long-lived SSE connections
+  server.headersTimeout = 0
+  server.requestTimeout = 0
+  server.keepAliveTimeout = 0
 
   function shutdown(signal) {
     logger.info({ signal }, 'Shutdown signal received — closing server')

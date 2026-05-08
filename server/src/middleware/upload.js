@@ -19,6 +19,7 @@ function singleUpload(fieldName) {
   return (req, res, next) => {
     handler(req, res, (err) => {
       if (!err) return next()
+      console.warn('[upload] multer error:', err.code, err.message, { field: err.field, status: err.status })
       if (err.code === 'LIMIT_FILE_SIZE') {
         return res.status(413).json({ status: 'error', message: `File exceeds ${CONFIG.maxFileSizeMB}MB limit` })
       }

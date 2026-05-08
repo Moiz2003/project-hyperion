@@ -3,6 +3,7 @@
 const crypto = require('crypto')
 const { CONFIG } = require('../config')
 const { logger } = require('../utils/logger')
+const { isDemoMode } = require('../utils/demoMode')
 const { isMongoConnected } = require('../db')
 const ScanResult = require('../models/ScanResult')
 const { runVisionAgent } = require('../services/visionAgent')
@@ -13,16 +14,10 @@ const { PROMPT_VERSION } = require('../prompts')
 // Demo Mode: 1 iteration, no revision loop, <45s target
 // Production Mode: up to CONFIG.maxConsensusIterations with full adversarial loop
 const DEMO_MAX_ITERATIONS = 1
-const PROD_MAX_ITERATIONS = 2  // hard cap below CONFIG default to avoid 504s
+// Respect the config value but cap at 3 to avoid excessive 504s
+const PROD_MAX_ITERATIONS = Math.min(CONFIG.maxConsensusIterations, 3)
 
 const MIN_VIABLE_CHARS = 10  // anything shorter is treated as a failed response
-
-function isDemoMode(req) {
-  // Priority: per-request flag > env var
-  if (req.query.demo === 'true' || req.query.demo === '1') return true
-  if (req.query.demo === 'false' || req.query.demo === '0') return false
-  return CONFIG.demoMode === true
-}
 
 function isViable(text) {
   return typeof text === 'string' && text.trim().length >= MIN_VIABLE_CHARS
@@ -144,7 +139,7 @@ async function analyzeScan(req, res, next) {
   })
 }
 
-async function runPipeline(imageBuffer, imageHash, requestId, log, demoMode, emit = () => {}) {
+async function runPipeline(imageBuffer, imageHash, requestId, log, demoMode, emit = () => { }) {
   const maxIterations = demoMode ? DEMO_MAX_ITERATIONS : PROD_MAX_ITERATIONS
   let partial = false
   const agentTimings = {}

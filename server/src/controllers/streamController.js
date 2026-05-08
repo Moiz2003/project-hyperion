@@ -3,16 +3,11 @@
 const crypto = require('crypto')
 const { CONFIG } = require('../config')
 const { logger } = require('../utils/logger')
+const { isDemoMode } = require('../utils/demoMode')
 const { isMongoConnected } = require('../db')
 const ScanResult = require('../models/ScanResult')
 const { runPipeline } = require('./analyzeController')
 const { PROMPT_VERSION } = require('../prompts')
-
-function isDemoMode(req) {
-  if (req.query.demo === 'true' || req.query.demo === '1') return true
-  if (req.query.demo === 'false' || req.query.demo === '0') return false
-  return CONFIG.demoMode === true
-}
 
 function send(res, event, data) {
   res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)

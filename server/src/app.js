@@ -2,6 +2,7 @@
 
 const express = require('express')
 const cors = require('cors')
+const helmet = require('helmet')
 const { randomUUID } = require('crypto')
 const { logger } = require('./utils/logger')
 const { errorHandler, notFound } = require('./middleware/errorHandler')
@@ -14,7 +15,16 @@ const analyticsRoutes = require('./routes/analytics')
 
 const app = express()
 
-app.use(cors())
+// Security headers — must be before CORS
+app.use(helmet())
+
+// CORS: restrict origin in production via CORS_ORIGIN env var
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || '*',
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}))
+
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 

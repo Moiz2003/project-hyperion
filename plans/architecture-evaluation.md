@@ -1,285 +1,231 @@
-# Hyperion Medical AI Swarm — Architecture Evaluation & Diagnostic Report
+# Project Hyperion — Full System Pre-Flight Audit
 
-## 1. System Overview
-
-Hyperion is a **three-agent adversarial medical AI pipeline** that analyzes medical scan images (X-rays, CT, etc.) and produces a structured clinical assessment. The system uses local vLLM-hosted LLMs in a **Vision → Drafter → Critic** chain with an optional revision loop.
-
-### High-Level Architecture
-
-```mermaid
-flowchart LR
-    Client[Client / Frontend] -->|POST /api/analyze-scan| Upload[Upload Middleware]
-    Upload --> Validate[Validation Middleware]
-    Validate --> RateLimit[Rate Limiter]
-    RateLimit --> Controller[analyzeController]
-    
-    Controller --> Cache{Cache Hit?}
-    Cache -->|Yes| Response[200 Cached Result]
-    Cache -->|No| Pipeline
-    
-    subgraph Pipeline[Adversarial Pipeline]
-        V[Vision Agent<br/>InternVL-Chat] --> D[Drafter Agent<br/>Meditron-70B]
-        D --> C[Critic Agent<br/>Llama-3-70B]
-        C -->|Rejected| D
-        C -->|Accepted| Result
-    end
-    
-    Pipeline --> Persist[MongoDB Persist]
-    Persist --> Response
-```
-
-### Data Flow
-
-```mermaid
-sequenceDiagram
-    participant C as Client
-    participant A as analyzeController
-    participant V as Vision Agent
-    participant D as Drafter Agent
-    participant CR as Critic Agent
-    participant DB as MongoDB
-
-    C->>A: POST /api/analyze-scan (image)
-    A->>A: Check cache (imageHash)
-    alt Cache Hit
-        A->>C: 200 Cached Result
-    else Cache Miss
-        A->>V: runVisionAgent(image)
-        V-->>A: rawFindings (text)
-        A->>D: runDrafterAgent(rawFindings)
-        D-->>A: draftReport
-        loop Up to N iterations
-            A->>CR: runCriticAgent(draft, raw)
-            CR-->>A: {verifiedReport, rejected, issues}
-            alt rejected & iterations remain
-                A->>D: runDrafterAgent(raw, issues) [revision]
-                D-->>A: revised draft
-            else accepted or max iterations
-                break
-            end
-        end
-        A->>DB: ScanResult.create()
-        A->>C: 200/206 Result
-    end
-```
+**Date:** 2026-05-08  
+**Auditor:** Principal Full-Stack Architect & SRE  
+**Target:** Production deployment — Vercel (frontend) + Render (backend)
 
 ---
 
-## 2. Agent-by-Agent Evaluation
+## 1. Integration Integrity: The SSE & CORS Bridge
 
-### 2.1 Vision Agent ([`server/src/services/visionAgent.js`](server/src/services/visionAgent.js))
+### 1.1 SSE Stream Handoff: streamController.js ↔ Dashboard.jsx
 
-| Aspect | Assessment |
-|--------|-----------|
-| **Model** | `OpenGVLab/InternVL-Chat-V1-5-AWQ` — strong multimodal VLM |
-| **Endpoint** | `/v1/chat/completions` (OpenAI-compatible) |
-| **Retry** | 2 retries, 3s base delay, exponential backoff (max 16s) |
-| **Temperature** | 0.1 (low — deterministic) |
-| **Max Tokens** | 1024 |
-| **Strengths** | Clean single-responsibility; uses structured prompt with explicit sections; low temperature for clinical consistency |
-| **Weaknesses** | No fallback model if primary vision model fails; no image preprocessing (resize, compress) before base64 encoding — could hit token limits on large images; no timeout per inference call (only pipeline-level timeout) |
-| **Risk** | If the vision model returns degenerate output (e.g., `<10 chars`), the controller catches this and falls back to a placeholder string — but the vision agent itself has no output validation |
+**Status: FUNCTIONAL — with 1 CRITICAL edge case**
 
-### 2.2 Drafter Agent ([`server/src/services/drafterAgent.js`](server/src/services/drafterAgent.js))
+The SSE protocol implementation is correct:
+- [`streamController.js:27-31`](server/src/controllers/streamController.js:27) sets `Content-Type: text/event-stream`, `Cache-Control: no-cache`, `Connection: keep-alive`, and `X-Accel-Buffering: no`.
+- [`Dashboard.jsx:156-193`](client/src/pages/Dashboard.jsx:156) uses `ReadableStream.getReader()` with a `TextDecoder` and correctly handles SSE frame parsing via `\n\n` delimiters.
 
-| Aspect | Assessment |
-|--------|-----------|
-| **Model** | `TheBloke/Meditron-70B-AWQ` — medical-domain fine-tuned LLM |
-| **Endpoint** | `/v1/chat/completions` (was `/v1/completions`, now fixed) |
-| **Retry** | 3 retries (0 retries in simplified mode), 2s base delay |
-| **Temperature** | 0.1 |
-| **Max Tokens** | 512 |
-| **Strengths** | Three prompt modes (initial, revision, simplified fallback); revision mode includes structured sections from critic feedback; simplified mode is a lightweight alternative when the full prompt fails |
-| **Weaknesses** | `max_tokens: 512` is quite low for a full structured clinical assessment with 5 sections — may truncate output; no `stop` tokens configured (unlike critic agent); the simplified prompt is hardcoded in the service rather than in the prompt library |
-| **Risk** | Truncation at 512 tokens could cut off critical sections like Red Flags or Patient-Facing Summary |
+**CRITICAL: Memory leak in SSE buffer accumulation**  
+[`Dashboard.jsx:163`](client/src/pages/Dashboard.jsx:163): The `buffer` variable accumulates incomplete SSE frames across reads. If the pipeline runs for 6+ minutes and produces large agent outputs (e.g., 1536-token drafter responses), the buffer grows unboundedly. A single corrupted frame could cause the buffer to grow until OOM on low-memory devices.
 
-### 2.3 Critic Agent ([`server/src/services/criticAgent.js`](server/src/services/criticAgent.js))
+**CRITICAL: No AbortController on fetch**  
+[`Dashboard.jsx:145-148`](client/src/pages/Dashboard.jsx:145): The `fetch()` call has no `AbortController.signal`. If the user navigates away or clicks "Clear" mid-stream, the fetch continues in the background, the `reader.read()` loop keeps running, and `setSwarmEvents` fires state updates on an unmounted component. This causes a React "Can't perform a React state update on an unmounted component" warning and a network-level leak.
 
-| Aspect | Assessment |
-|--------|-----------|
-| **Model** | `casperhansen/llama-3-70b-instruct-awq` |
-| **Endpoint** | `/v1/chat/completions` |
-| **Retry** | 3 retries, 2s base delay |
-| **Temperature** | 0.1 |
-| **Max Tokens** | 512 |
-| **Stop Tokens** | `['User:', 'Assistant:', '<|eot_id|>']` |
-| **Strengths** | Uses system + user message structure for better instruction adherence; has stop tokens to prevent runaway generation; parses structured JSON metadata from output; robust fallback defaults when JSON parsing fails |
-| **Weaknesses** | The `parseCriticOutput` function has a **duplicate regex call** — `issuesMatch` is computed twice (lines 60 and 70); the `rejected` logic is convoluted: it checks both the JSON `rejected` field AND the Issues Found section text, which could lead to inconsistent states |
-| **Risk** | If the critic model generates output without the `### Issues Found` / `### Verified Report` / `### Metadata` structure, parsing degrades to treating the entire output as the verified report — this is a brittle parsing strategy |
+### 1.2 CORS Configuration
+
+**Status: ACCEPTABLE for hackathon — must lock for production**
+
+[`app.js:17`](server/src/app.js:17): `app.use(cors())` — fully unrestricted. This is acceptable for a 24-hour hackathon window where the Render backend and Vercel frontend share the same team-controlled domain. However:
+
+- **Preflight (OPTIONS) requests** will be generated by the browser for `POST` with `Content-Type: multipart/form-data`. Express 5's `cors()` middleware handles OPTIONS correctly, so no preflight issues on Render.
+- **Production requirement:** Before going live, restrict to `cors({ origin: process.env.CORS_ORIGIN || 'https://hyperion-ai.vercel.app' })`.
 
 ---
 
-## 3. Adversarial Consensus Loop Analysis
+## 2. The "Long-Haul" Persistence (10-Minute Timeouts)
 
-The loop in [`analyzeController.js:runPipeline()`](server/src/controllers/analyzeController.js:139) operates as follows:
+### 2.1 Express/Node Keep-Alive Defaults
 
-```mermaid
-flowchart TD
-    Start[Start Pipeline] --> Vision[Vision Agent]
-    Vision --> Draft[Drafter Agent]
-    Draft --> Critic[Critic Agent]
-    Critic --> Check{rejected?}
-    Check -->|No| Accept[Accept Report]
-    Check -->|Yes & iterations remain| Revise[Drafter Revision]
-    Revise --> Critic
-    Check -->|Yes & max iterations| ForceAccept[Accept Critic's Report]
-    
-    Accept --> Return[Return Result]
-    ForceAccept --> Return
-```
+**Status: 1 CRITICAL — hidden 2-minute timeout from Node HTTP**
 
-### Key Observations
+[`server.js:13`](server/src/server.js:13): `app.listen(CONFIG.port, ...)` uses the default `http.Server` settings. Node.js `http.Server` has a default `timeout` of **0** (no timeout) for the socket, BUT:
 
-1. **Demo Mode** (`?demo=true`): Runs exactly 1 critic pass, always accepts the result regardless of rejection. This is a sensible simplification for fast demos.
+- **Express 5** sets `server.timeout` to **0** by default (no timeout), which is correct.
+- **However**, Render's load balancer has a **60-second idle timeout** for connections without data. Since SSE streams send data continuously during pipeline execution, this should not trigger.
+- **CRITICAL: `keepAliveTimeout` defaults to 5 seconds** in Node.js >= 19. After the SSE stream ends (`res.end()`), the socket may be reused. This is fine.
 
-2. **Production Mode**: Hard-capped at `PROD_MAX_ITERATIONS = 2` iterations, which is **lower** than `CONFIG.maxConsensusIterations` (default 3). This is a deliberate safety measure to avoid 504 timeouts.
+**The real threat:** [`server.js:13`](server/src/server.js:13) does NOT set `server.headersTimeout`. In Node.js, `headersTimeout` defaults to `60000` (60s) for new connections. For long-lived SSE connections, this is irrelevant since headers are sent at connection start.
 
-3. **Loop Logic Issue**: On line 196, the condition is `if (!criticRejected(criticResult) || demoMode)`. In demo mode, this means the loop **always breaks on the first iteration** — correct. But in production mode, if the critic rejects, the loop continues to revision. However, the `totalInterventions` counter increments on line 194 **before** the rejection check — meaning interventions are counted even when the critic accepts. This is a minor counting inaccuracy.
+**CRITICAL FINDING:** [`streamController.js:70-75`](server/src/controllers/streamController.js:70): The pipeline timeout is set to `CONFIG.pipelineTimeoutMs` (600000ms = 10 min). However, the individual agent timeouts are:
+- Vision: 60s ([`visionAgent.js:29`](server/src/services/visionAgent.js:29))
+- Drafter: 45s ([`drafterAgent.js:51`](server/src/services/drafterAgent.js:51))
+- Critic: 45s ([`criticAgent.js:28`](server/src/services/criticAgent.js:28))
 
-4. **Partial Flag Propagation**: The `partial` flag is set to `true` when any agent fails and falls back to placeholder text. This correctly triggers a 206 status code. However, the partial flag is **not persisted** to MongoDB — the `ScanResult.create()` call on line 106-114 doesn't include a `partial` field.
+With 3 critic iterations max, the worst-case agent runtime is: 60s + 45s + (45s × 3 iterations) + (45s × 2 revisions) = **60 + 45 + 135 + 90 = 330s (5.5 min)**. This fits within the 10-min pipeline timeout. However, the retry logic adds exponential backoff: up to 2 retries for vision (3s, 6s), 3 retries for drafter (2s, 4s, 8s), 3 retries for critic (2s, 4s, 8s). Worst-case with all retries: ~45s additional. Total: ~375s. Still within 600s.
 
----
+### 2.2 Render-Specific: X-Accel-Buffering
 
-## 4. Error Handling & Resilience
+**Status: CORRECT**
 
-### 4.1 Graceful Degradation Chain
+[`streamController.js:30`](server/src/controllers/streamController.js:30): `res.setHeader('X-Accel-Buffering', 'no')` — this is the correct header to disable response buffering on Render's nginx proxy. Without this, Render would buffer the entire SSE response before sending anything to the client, defeating the purpose of streaming.
 
-```mermaid
-flowchart LR
-    subgraph Vision[Vision Failure]
-        V1[Vision Agent throws] --> V2[Fallback text]
-        V2 --> V3[partial=true]
-    end
-    
-    subgraph Drafter[Drafter Failure]
-        D1[Drafter throws] --> D2[Simplified Drafter Retry]
-        D2 -->|Fails| D3[Text fallback]
-        D3 --> D4[partial=true]
-    end
-    
-    subgraph Critic[Critic Failure]
-        C1[Critic throws] --> C2[Keep current draft]
-        C2 --> C3[partial=true, break loop]
-    end
-    
-    subgraph Timeout[Pipeline Timeout]
-        T1[Promise.race timeout] --> T2[206 Partial Response]
-        T2 --> T3[Hardcoded fallback data]
-    end
-```
+### 2.3 Express 5 Body Parser Timeouts
 
-### 4.2 Retry Strategy
+**Status: 1 CRITICAL**
 
-| Agent | Max Retries | Base Delay | Backoff | Notes |
-|-------|-------------|------------|---------|-------|
-| Vision | 2 | 3,000ms | Exponential (x2) | Only retries on 429/500/503/ECONNRESET/ETIMEDOUT |
-| Drafter | 3 | 2,000ms | Exponential (x2) | Simplified mode has 0 retries |
-| Critic | 3 | 2,000ms | Exponential (x2) | Same retryable conditions |
+[`app.js:18`](server/src/app.js:18): `app.use(express.json())` — Express 5's JSON body parser has a default `requestTimeout` of 60 seconds for receiving the request body. For file uploads, this is handled by multer before the JSON parser, so it's not an issue for the `/api/analyze-scan/stream` endpoint.
 
-### 4.3 Issues Found
-
-1. **No per-agent timeout**: Each agent call can theoretically hang indefinitely. Only the pipeline-level timeout (`240s` default) protects against this. If one agent hangs, the entire pipeline is lost.
-
-2. **`withRetry` throws on non-retryable errors**: If an agent returns a 400 or 422 (e.g., bad request), the retry function immediately throws without retrying — this is correct behavior, but the error message in the log doesn't distinguish between "exhausted retries" and "non-retryable error".
-
-3. **Timeout fallback data is hardcoded**: On pipeline timeout (line 84-97), the response includes hardcoded strings like `'Vision analysis incomplete due to timeout.'` — this is fine for a fallback, but it means the client gets no partial data from agents that may have completed before the timeout.
+**However**, there is NO `requestTimeout` set on the Express app itself. Express 5 introduced `app.requestTimeout` which defaults to **0** (disabled). This is correct for SSE.
 
 ---
 
-## 5. Test Coverage Analysis
+## 3. Error Boundary Robustness
 
-| Test Suite | Tests | Coverage | Quality |
-|------------|-------|----------|---------|
-| Input Validation | 4 tests (missing file, invalid MIME, oversized, wrong field) | ✅ Full | Good — covers all multer error paths |
-| Happy Path | 1 test (clean consensus) | ✅ | Validates full response shape including `urgency_flag`, `recommended_dept`, `critic_interventions` |
-| Adversarial Loop | 1 test (reject → revise → accept) | ✅ | Validates `critic_interventions: 2` |
-| Error Scenarios | 4 tests (503, 429, ECONNREFUSED, malformed JSON) | ✅ | Updated to expect 206 partial responses |
-| Rate Limiting | 1 test (11 requests → 429) | ✅ | Simple but effective |
+### 3.1 MongoDB "God-Mode" Graceful Degradation
 
-### Test Gaps
+**Status: CORRECT — but 1 edge case**
 
-1. **No demo mode tests**: The `?demo=true` query parameter is untested.
-2. **No simplified drafter test**: The fallback path where the drafter fails and retries with a simplified prompt is untested.
-3. **No pipeline timeout test**: The 504 → 206 timeout path is untested.
-4. **No degenerate output test**: The `isViable()` check (MIN_VIABLE_CHARS < 10) is untested.
-5. **No cache hit test**: The MongoDB cache path is untested (requires mocking mongoose).
-6. **`makeCompletionResponse` is unused**: The fixture file still exports `makeCompletionResponse` (for the old `/v1/completions` endpoint), but it's no longer imported in the test file. Dead code.
+[`scansController.js:8-10`](server/src/controllers/scansController.js:8): Returns `200 OK` with empty `data: []` when MongoDB is disconnected. ✅  
+[`analyticsController.js:8-21`](server/src/controllers/analyticsController.js:8): Returns `200 OK` with zeroed analytics when MongoDB is disconnected. ✅
 
----
+**Frontend handling:**  
+[`Dashboard.jsx:150-154`](client/src/pages/Dashboard.jsx:150): The `fetch` error handler catches non-OK responses and displays the error. For the empty-data case (200 OK with empty array), the `ScanHistorySidebar` component would receive an empty array — this is safe.
 
-## 6. Security & Configuration
+**CRITICAL: [`Dashboard.jsx:187`](client/src/pages/Dashboard.jsx:187): `window.__hyperionSaveScan`** — This global function is called without checking if it exists. If the scan history module hasn't loaded yet, this throws a `TypeError`, which is caught by the outer `try/catch` at line 195, but it would overwrite a legitimate pipeline error with a misleading "Failed to connect to AI swarm endpoint" message.
 
-| Area | Assessment |
-|------|-----------|
-| **File Upload** | MIME type whitelist (JPEG, PNG, WebP, GIF, TIFF); 20MB size limit; memory storage (no disk writes) |
-| **Rate Limiting** | 10 req/min for analyze, 60 req/min for scans — sensible defaults |
-| **API Keys** | Hardcoded `'local'` for all vLLM endpoints — acceptable for local-only deployment |
-| **MongoDB** | Connection string from env var; graceful fallback if unavailable |
-| **CORS** | Wide open (`app.use(cors())` with no origin restriction) — should be locked down in production |
-| **Error Exposure** | 500 errors return generic `'Internal server error'` — no stack trace leakage |
+### 3.2 Client-Side 15MB File Guard
 
----
+**Status: FUNCTIONAL — but logic is inverted**
 
-## 7. Architectural Strengths
+[`Dashboard.jsx:54-58`](client/src/pages/Dashboard.jsx:54): The file size check runs AFTER `setFile(selectedFile)` at line 46. This means:
+1. User selects a 50MB file
+2. `setFile(selectedFile)` sets the file state
+3. The 15MB check sets an error message
+4. User clicks "Execute Swarm Protocol"
+5. The 50MB file is sent to the server
+6. Server's multer rejects it with 413
 
-1. **Clean separation of concerns**: Each agent is a single file with a single exported function. Controllers, routes, middleware, and services are well-separated.
+**The guard is advisory, not preventative.** The "Execute Swarm Protocol" button should be disabled when the error is a file-size error. Currently, [`UploadZone.jsx:105`](client/src/components/Dashboard/UploadZone.jsx:105) only checks `!file || isLoading` — it does NOT check for the file-size error.
 
-2. **Graceful degradation everywhere**: Every agent failure has a fallback path. The system never crashes — it degrades to partial results (206).
+### 3.3 ErrorBoundary Component
 
-3. **Dual-engine mode**: Demo vs. Production mode is a pragmatic design that allows fast demos without sacrificing the full adversarial loop in production.
+**Status: FUNCTIONAL**
 
-4. **Structured prompt library**: Prompts are versioned and centralized in [`server/src/prompts/index.js`](server/src/prompts/index.js), making prompt engineering changes traceable.
+[`ErrorBoundary.jsx`](client/src/components/ErrorBoundary.jsx): Correctly implements `getDerivedStateFromError` and `componentDidCatch`. The SwarmVisualizer is wrapped with a fallback at [`Dashboard.jsx:318-322`](client/src/pages/Dashboard.jsx:318).
 
-5. **Exponential backoff retry**: The `withRetry` utility is well-designed with configurable retries, delay, and logging.
-
-6. **Cache layer**: MongoDB-based caching with image hashing avoids redundant analysis of the same image.
+**However**, the ErrorBoundary only wraps the SwarmVisualizer, not the entire dashboard. A crash in `ResultsPanel` or `UploadZone` would propagate to the React root and show a white screen.
 
 ---
 
-## 8. Architectural Weaknesses & Risks
+## 4. Production Environment Variables
 
-### Critical
+### 4.1 Complete Inventory
 
-1. **No per-agent timeout**: If any vLLM instance hangs, the entire pipeline is blocked until the 240s pipeline timeout. Each agent call should have its own timeout (e.g., 60s for vision, 30s for drafter, 30s for critic).
+| Variable | Required | Vercel | Render | Purpose |
+|----------|----------|--------|--------|---------|
+| `VITE_API_URL` | ✅ | ✅ | — | Backend URL (Render deployment URL) |
+| `PORT` | ❌ (default 3000) | — | ✅ | Server listen port |
+| `MONGO_URI` | ⚠️ (graceful fallback) | — | ✅ | MongoDB Atlas connection string |
+| `LOCAL_DRAFTER_URL` | ✅ | — | ✅ | AMD MI350X drafter endpoint |
+| `LOCAL_VISION_URL` | ✅ | — | ✅ | AMD MI350X vision endpoint |
+| `LOCAL_CRITIC_URL` | ✅ | — | ✅ | AMD MI350X critic endpoint |
+| `DRAFTER_MODEL` | ⚠️ (has default) | — | ✅ | Meditron-70B model name |
+| `VISION_MODEL` | ⚠️ (has default) | — | ✅ | InternVL model name |
+| `CRITIC_MODEL` | ⚠️ (has default) | — | ✅ | Llama-3-70B model name |
+| `DEMO_MODE` | ❌ (default false) | — | ✅ | Toggle demo/production mode |
+| `PIPELINE_TIMEOUT_MS` | ❌ (default 600000) | — | ✅ | Pipeline timeout in ms |
+| `MAX_CONSENSUS_ITERATIONS` | ❌ (default 3) | — | ✅ | Max critic loop iterations |
+| `MAX_FILE_SIZE_MB` | ❌ (default 20) | — | ✅ | Max upload file size |
+| `RATE_LIMIT_WINDOW_MS` | ❌ (default 60000) | — | ✅ | Rate limit window |
+| `RATE_LIMIT_MAX_ANALYZE` | ❌ (default 10) | — | ✅ | Max analyze requests/window |
+| `RATE_LIMIT_MAX_SCANS` | ❌ (default 60) | — | ✅ | Max scan list requests/window |
+| `LOG_LEVEL` | ❌ (default 'info') | — | ✅ | Pino log level |
+| `PROMPT_VERSION` | ❌ (default 'v1') | — | ✅ | Prompt version selector |
+| `NODE_ENV` | ✅ | — | ✅ | 'production' on Render |
+| `CORS_ORIGIN` | ⚠️ (needed for prod) | — | ✅ | Restrict CORS in production |
 
-2. **Drafter `max_tokens: 512` is too low**: A full clinical assessment with 5 sections, differential diagnoses, and patient-facing summary can easily exceed 512 tokens. This will silently truncate output.
+### 4.2 Localhost → AMD Developer Cloud Transition
 
-### Moderate
+[`config/index.js:9-11`](server/src/config/index.js:9): The default URLs point to `localhost:8000/v1`, `localhost:8001/v1`, `localhost:8002/v1`. For AMD Developer Cloud deployment, these must be set to the actual vLLM endpoint URLs.
 
-3. **Duplicate regex in `parseCriticOutput`**: Lines 60 and 70 both compute `issuesMatch` — the second call overwrites the first. This is a code smell and wastes CPU.
-
-4. **`totalInterventions` counting is imprecise**: Interventions are incremented on every critic pass, even when the critic accepts (no issues found). The counter should only increment when `criticResult.rejected === true`.
-
-5. **No partial flag in persistence**: The `ScanResult` model doesn't store whether the result was partial, so historical queries can't distinguish full vs. degraded analyses.
-
-6. **CORS wide open**: `app.use(cors())` without origin restriction is a security concern for production deployment.
-
-### Minor
-
-7. **`makeCompletionResponse` is dead code**: The test fixtures still export this function, but it's no longer used since the drafter switched to `/v1/chat/completions`.
-
-8. **No health check for individual agents**: The `/health/detailed` endpoint doesn't check whether each vLLM instance is actually reachable.
-
-9. **`console.log` debug statements**: Several `[DEBUG]` console.log calls remain in production code (controller, drafter, critic). These should be routed through the logger.
+**CRITICAL: No HTTPS enforcement.** The config does not validate that the AMD endpoints use HTTPS in production. If the AMD Developer Cloud exposes HTTP endpoints, credentials (API keys) would be sent in cleartext. The `apiKey: 'local'` in each agent service is a placeholder — if the AMD endpoints require authentication, this will fail silently.
 
 ---
 
-## 9. Recommendations
+## 5. Final Verification
 
-### Priority 1 (Fix Now)
-- Add per-agent timeout to each `client.chat.completions.create()` call
-- Increase drafter `max_tokens` from 512 to 1024-1536
-- Fix the duplicate regex in `parseCriticOutput`
-- Fix `totalInterventions` to only count on actual rejections
+### 5.1 "Deep Clinical" vs "Fast Demo" Toggle Logic
 
-### Priority 2 (Strengthen)
-- Add tests for: demo mode, simplified drafter fallback, pipeline timeout, degenerate output, cache hit
-- Add `partial` field to `ScanResult` model and persist it
-- Remove dead `makeCompletionResponse` code
-- Replace `console.log` with structured logger calls
+**Status: 1 CRITICAL desync**
 
-### Priority 3 (Production Readiness)
-- Lock down CORS to specific origins
-- Add individual agent health checks to the `/health/detailed` endpoint
-- Consider adding a per-request timeout parameter that clients can set
-- Add image preprocessing (resize/compress) before base64 encoding to avoid token limits
+The toggle logic exists in TWO places with DIFFERENT iteration limits:
+
+1. [`analyzeController.js:15-16`](server/src/controllers/analyzeController.js:15): `DEMO_MAX_ITERATIONS = 1`, `PROD_MAX_ITERATIONS = 2`
+2. [`analyzeController.js:148`](server/src/controllers/analyzeController.js:148): `const maxIterations = demoMode ? DEMO_MAX_ITERATIONS : PROD_MAX_ITERATIONS`
+
+**CRITICAL: `PROD_MAX_ITERATIONS = 2` is hardcoded below `CONFIG.maxConsensusIterations` (default 3).** The comment at line 16 says "hard cap below CONFIG default to avoid 504s." This means production mode only runs 2 critic iterations max, NOT the 3 that `CONFIG.maxConsensusIterations` specifies. The config value is effectively ignored.
+
+Additionally, the demo mode detection is DUPLICATED:
+- [`analyzeController.js:20-25`](server/src/controllers/analyzeController.js:20): `isDemoMode(req)` — checks query param then env var
+- [`streamController.js:11-15`](server/src/controllers/streamController.js:11): `isDemoMode(req)` — identical logic
+
+**This duplication is a desync risk.** If one is updated and the other is not, the SSE stream and the REST endpoint would behave differently for the same request.
+
+### 5.2 initialDraft Persistence
+
+**Status: CORRECT**
+
+[`ScanResult.js:9`](server/src/models/ScanResult.js:9): `initialDraft: { type: String }` — optional field. The schema correctly handles the case where `initialDraft` might be missing from older records.
+
+[`streamController.js:47`](server/src/controllers/streamController.js:47): `initial_draft: cached.initialDraft || cached.verifiedReport` — correctly falls back to `verifiedReport` for older records. ✅
+
+[`analyzeController.js:52`](server/src/controllers/analyzeController.js:52): Same fallback pattern. ✅
+
+### 5.3 Pipeline Desync Risk
+
+**CRITICAL: [`analyzeController.js:147`](server/src/controllers/analyzeController.js:147): `emit = () => {}`**
+
+The `runPipeline` function accepts an `emit` parameter that defaults to a no-op. The SSE stream controller passes a real `emit` function ([`streamController.js:68`](server/src/controllers/streamController.js:68)), but the REST endpoint (`analyzeScan`) calls `runPipeline` without an `emit` ([`analyzeController.js:74`](server/src/controllers/analyzeController.js:74)), so it uses the no-op.
+
+**This is correct by design** — the REST endpoint doesn't need SSE events. However, if a developer adds event emission inside `runPipeline` thinking it's always wired up, the REST endpoint would silently swallow events. This is a maintenance hazard.
+
+---
+
+## 6. Summary of Findings
+
+### CRITICAL (Must Fix Before Deployment)
+
+| # | Issue | File | Fix |
+|---|-------|------|-----|
+| C1 | **SSE buffer memory leak** — unbounded `buffer` accumulation in ReadableStream reader | [`Dashboard.jsx:163`](client/src/pages/Dashboard.jsx:163) | Add max buffer size limit (e.g., 1MB) and flush strategy |
+| C2 | **Missing AbortController** — fetch continues after unmount | [`Dashboard.jsx:145`](client/src/pages/Dashboard.jsx:145) | Add AbortController, abort on cleanup/clear |
+| C3 | **`window.__hyperionSaveScan` without null check** — throws if undefined | [`Dashboard.jsx:187`](client/src/pages/Dashboard.jsx:187) | Add `typeof window.__hyperionSaveScan === 'function'` guard |
+| C4 | **File size guard is advisory, not preventative** — 50MB files still sent to server | [`Dashboard.jsx:54-58`](client/src/pages/Dashboard.jsx:54) | Disable "Execute" button when file exceeds limit |
+| C5 | **`PROD_MAX_ITERATIONS = 2` ignores `CONFIG.maxConsensusIterations`** | [`analyzeController.js:16`](server/src/controllers/analyzeController.js:16) | Use `Math.min(CONFIG.maxConsensusIterations, 2)` or remove hardcap |
+| C6 | **`isDemoMode()` duplicated** in two controllers — desync risk | [`streamController.js:11`](server/src/controllers/streamController.js:11) + [`analyzeController.js:20`](server/src/controllers/analyzeController.js:20) | Extract shared `isDemoMode()` into a utility module |
+
+### HIGH (Should Fix Before Deployment)
+
+| # | Issue | File | Fix |
+|---|-------|------|-----|
+| H1 | **CORS unrestricted** — `app.use(cors())` with no origin restriction | [`app.js:17`](server/src/app.js:17) | Add `cors({ origin: process.env.CORS_ORIGIN })` |
+| H2 | **No HTTPS enforcement** for AMD endpoints | [`config/index.js:9-11`](server/src/config/index.js:9) | Add URL protocol validation in `validateConfig()` |
+| H3 | **ErrorBoundary only wraps SwarmVisualizer** — other components can cause white screen | [`Dashboard.jsx:318`](client/src/pages/Dashboard.jsx:318) | Wrap entire dashboard content in ErrorBoundary |
+| H4 | **`helmet` installed but never used** — no security headers | [`server/package.json:27`](server/package.json:27) | Add `app.use(helmet())` in app.js |
+| H5 | **No `server.headersTimeout` set** — default 60s could cause issues | [`server.js:13`](server/src/server.js:13) | Set `server.headersTimeout = 0` for SSE |
+
+### LOW (Post-Deployment)
+
+| # | Issue | File | Fix |
+|---|-------|------|-----|
+| L1 | `pino-http` in dependencies but never used | `package.json` | Remove or wire up |
+| L2 | `dotenv` in dependencies but never called | `package.json` | Add `require('dotenv').config()` in server.js |
+| L3 | Server Dockerfile uses `npm run dev` (nodemon) for CMD | [`server/Dockerfile:12`](server/Dockerfile:12) | Change to `npm start` for production |
+
+---
+
+## 7. Immediate Fixes Applied
+
+The following CRITICAL and HIGH issues have been addressed with code changes:
+
+1. ✅ **C1** — SSE buffer capped at 1MB with flush strategy
+2. ✅ **C2** — AbortController added to fetch with cleanup on unmount and clear
+3. ✅ **C3** — `window.__hyperionSaveScan` null check added
+4. ✅ **C4** — Execute button disabled when file-size error is present
+5. ✅ **C5** — `PROD_MAX_ITERATIONS` now respects `CONFIG.maxConsensusIterations`
+6. ✅ **C6** — `isDemoMode()` extracted to shared utility
+7. ✅ **H1** — CORS restricted to `CORS_ORIGIN` env var
+8. ✅ **H3** — Full dashboard wrapped in ErrorBoundary
+9. ✅ **H4** — `helmet()` wired into Express
+10. ✅ **H5** — `server.headersTimeout = 0` for SSE compatibility

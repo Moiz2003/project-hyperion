@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import HUDIcons from './HUDIcons'
 
 export default function UploadZone({
-  file, previewUrl, isDragging, isLoading, error, engineMode,
+  file, previewUrl, isDragging, isLoading, error, fileSizeError, engineMode,
   onFileSelect, onDragOver, onDragLeave, onDrop, onClear, onAnalyze, onLoadDemo,
 }) {
   const fileInputRef = useRef(null)
@@ -102,9 +102,9 @@ export default function UploadZone({
 
       <button
         onClick={onAnalyze}
-        disabled={!file || isLoading}
+        disabled={!file || isLoading || fileSizeError}
         className={`relative w-full py-5 rounded-2xl font-inter font-semibold text-sm tracking-widest uppercase flex items-center justify-center gap-4 transition-all duration-500 overflow-hidden cursor-pointer shadow-lg
-          ${!file || isLoading
+          ${!file || isLoading || fileSizeError
             ? 'bg-slate-900 border border-slate-800 text-slate-600 cursor-not-allowed'
             : engineMode === 'discovery'
               ? 'bg-indigo-950/50 border border-indigo-500/50 text-indigo-400 hover:bg-indigo-500 hover:text-white hover:shadow-[0_0_30px_rgba(99,102,241,0.4)] group'

@@ -9,4 +9,5 @@ COPY . .
 
 EXPOSE 3000
 
-CMD ["npm", "run", "dev"]
+# Use start (not dev) for production deployments
+CMD ["npm", "start"]
