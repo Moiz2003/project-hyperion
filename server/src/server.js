@@ -1,5 +1,9 @@
 'use strict'
 
+// Force Google DNS to prevent querySrv ENOTFOUND on Render
+const dns = require('node:dns')
+dns.setServers(['8.8.8.8', '8.8.4.4'])
+
 // Load .env before anything else
 try { require('dotenv').config() } catch (_) { /* dotenv optional in production */ }
 
