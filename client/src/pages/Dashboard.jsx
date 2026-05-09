@@ -350,7 +350,10 @@ export default function Dashboard() {
     setIsHintLoading(true)
     // Small delay so the UI shows "Computing..." briefly for UX
     setTimeout(() => {
-      if (socraticHintCache) {
+      if (socraticHintCache && typeof socraticHintCache === 'object') {
+        // socraticHintCache is an object: { hintQuestion, clinicalContext, focusAnatomy, difficulty, keyFinding }
+        setHint(socraticHintCache.hintQuestion || 'Critic Node Nudge: Focus your attention on structural asymmetries in the medial zones.')
+      } else if (typeof socraticHintCache === 'string') {
         setHint(socraticHintCache)
       } else {
         setHint('Critic Node Nudge: Focus your attention on structural asymmetries in the medial zones.')
