@@ -35,12 +35,14 @@ router.post(
   batchAnalyze,
 )
 
-// Reveal endpoint — Discovery Mode only. After the resident has submitted their
-// assessment, this runs the full adversarial pipeline on the cached image and
-// returns the verified report alongside a diagnosis match score.
+// Reveal endpoint — Discovery Mode only. Accepts either:
+//   - JSON body { image_hash, resident_assessment } (uses in-memory edu cache), or
+//   - multipart form-data with xray_image + resident_assessment (re-runs from
+//     fresh upload, survives dyno restarts and cross-instance cache misses).
 router.post(
   '/reveal',
   analyzeLimiter,
+  upload.single('xray_image'),
   validateReveal,
   revealAnalysis,
 )

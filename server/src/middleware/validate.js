@@ -36,7 +36,7 @@ function validateAnalyzeScan(req, res, next) {
 }
 
 const revealSchema = z.object({
-  image_hash: z.string({ message: 'image_hash is required' }).min(1, 'image_hash must not be empty'),
+  image_hash: z.string().min(1).optional(),
   resident_assessment: z.string().optional(),
 })
 
@@ -49,6 +49,13 @@ function validateReveal(req, res, next) {
   if (!result.success) {
     const message = result.error.issues.map(e => e.message).join('; ')
     return res.status(400).json({ status: 'error', message })
+  }
+  // Either an uploaded image or an image_hash is required.
+  if (!req.file && !body.image_hash) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Either xray_image (multipart) or image_hash (JSON) is required.',
+    })
   }
   next()
 }

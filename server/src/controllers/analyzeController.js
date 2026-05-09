@@ -350,20 +350,37 @@ async function revealAnalysis(req, res, next) {
   const log = logger.child({ requestId, reveal: true })
   const t0 = Date.now()
 
-  const imageHash = req.body.image_hash
   const residentAssessment = typeof req.body.resident_assessment === 'string'
     ? req.body.resident_assessment.trim()
     : ''
   const demoMode = isDemoMode(req)
 
-  const cached = eduSessionCache.get(imageHash)
-  if (!cached) {
-    log.warn({ imageHash }, 'Reveal — edu session not found or expired')
-    return res.status(404).json({
-      status: 'error',
-      message: 'Edu session not found or expired. Please re-upload the scan in Discovery Mode.',
-      requestId,
-    })
+  // Prefer the uploaded image (resilient to dyno restarts and multi-instance cache misses).
+  // Fall back to the in-memory edu session cache keyed by image_hash.
+  let imageBuffer
+  let imageHash
+  let cachedSocraticHint = null
+
+  if (req.file && req.file.buffer) {
+    imageBuffer = req.file.buffer
+    imageHash = crypto.createHash('sha256').update(imageBuffer).digest('hex')
+    const cached = eduSessionCache.get(imageHash)
+    if (cached) cachedSocraticHint = cached.socraticHint
+    log.info({ imageHash, source: 'upload' }, 'Reveal — using uploaded image')
+  } else {
+    imageHash = req.body.image_hash
+    const cached = eduSessionCache.get(imageHash)
+    if (!cached) {
+      log.warn({ imageHash }, 'Reveal — edu session not found or expired')
+      return res.status(404).json({
+        status: 'error',
+        message: 'Edu session not found or expired. Please re-upload the scan in Discovery Mode.',
+        requestId,
+      })
+    }
+    imageBuffer = cached.imageBuffer
+    cachedSocraticHint = cached.socraticHint
+    log.info({ imageHash, source: 'cache' }, 'Reveal — using cached image')
   }
 
   log.info({ hasAssessment: residentAssessment.length > 0, demoMode }, 'Reveal — running clinical pipeline')
@@ -371,7 +388,7 @@ async function revealAnalysis(req, res, next) {
   let pipelineResult
   try {
     pipelineResult = await Promise.race([
-      runPipeline(cached.imageBuffer, imageHash, requestId, log, demoMode, () => {}, 'clinical'),
+      runPipeline(imageBuffer, imageHash, requestId, log, demoMode, () => {}, 'clinical'),
       new Promise((_, reject) =>
         setTimeout(
           () => reject(Object.assign(new Error('Reveal pipeline timeout'), { status: 504 })),
@@ -424,7 +441,7 @@ async function revealAnalysis(req, res, next) {
       critic_interventions: pipelineResult.totalInterventions,
       agent_timings: pipelineResult.agentTimings,
       partial: pipelineResult.partial,
-      socratic_hint: cached.socraticHint,
+      socratic_hint: cachedSocraticHint,
       resident_assessment: residentAssessment,
       diagnosis_match: diagnosisMatch,
       image_hash: imageHash,

@@ -360,21 +360,37 @@ export default function Dashboard() {
   const handleReveal = useCallback(async () => {
     const hash = results?._imageHash || imageHashCache
     if (!residentInput.trim()) return
-    if (!hash) {
-      setRevealError('Image hash unavailable — please re-upload the scan in Education mode and wait for analysis to finish.')
+    if (!file && !hash) {
+      setRevealError('No image available — please re-upload the scan in Education mode.')
       return
     }
     setIsRevealing(true)
     setRevealError(null)
     try {
-      const resp = await fetch(`${API_BASE}/api/analyze-scan/reveal`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          image_hash: hash,
-          resident_assessment: residentInput,
-        }),
-      })
+      // Prefer multipart with the original file so the backend doesn't depend
+      // on its in-memory edu cache (survives Render dyno restarts and
+      // cross-instance cache misses). Fall back to JSON+image_hash if the file
+      // is gone (e.g. scan loaded from history).
+      let resp
+      if (file) {
+        const fd = new FormData()
+        fd.append('xray_image', file)
+        fd.append('resident_assessment', residentInput)
+        if (hash) fd.append('image_hash', hash)
+        resp = await fetch(`${API_BASE}/api/analyze-scan/reveal`, {
+          method: 'POST',
+          body: fd,
+        })
+      } else {
+        resp = await fetch(`${API_BASE}/api/analyze-scan/reveal`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            image_hash: hash,
+            resident_assessment: residentInput,
+          }),
+        })
+      }
 
       let json = null
       try { json = await resp.json() } catch (_) { /* non-JSON response */ }
@@ -406,7 +422,7 @@ export default function Dashboard() {
     } finally {
       setIsRevealing(false)
     }
-  }, [results, residentInput, imageHashCache])
+  }, [results, residentInput, imageHashCache, file])
 
   // Keyboard shortcuts (defined after handleReveal so it can be referenced)
   useEffect(() => {
