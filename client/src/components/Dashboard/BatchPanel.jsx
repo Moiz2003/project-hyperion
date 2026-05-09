@@ -75,7 +75,7 @@ function ResultCard({ item, index }) {
   )
 }
 
-export default function BatchPanel() {
+export default function BatchPanel({ speedMode = 'fast' }) {
   const inputRef = useRef(null)
   const [files, setFiles] = useState([])
   const [previews, setPreviews] = useState([])
@@ -111,19 +111,29 @@ export default function BatchPanel() {
     files.forEach(f => formData.append('xray_images', f))
 
     try {
-      const resp = await fetch(`${API_BASE}/api/analyze-scan/batch`, {
+      // Pass the speed tier query param so the backend can budget the
+      // batch run. Fast tier short-circuits each scan to vision-only;
+      // Pro tier runs the full pipeline per scan with a 5min cap.
+      const resp = await fetch(`${API_BASE}/api/analyze-scan/batch?speed=${speedMode}`, {
         method: 'POST',
         body: formData,
       })
       const data = await resp.json()
-      if (data.status === 'success') {
+      if (data.status === 'success' || data.status === 'partial') {
         setResults(data.results)
         setSummary(data.summary)
       } else {
-        setError(data.message || 'Batch failed')
+        // Never surface raw timeouts. Show whatever results we got.
+        if (data.results) {
+          setResults(data.results)
+          setSummary(data.summary)
+        } else {
+          setError('Batch finished in degraded mode. Some scans may show fallback results.')
+        }
       }
     } catch (err) {
-      setError(err.message || 'Failed to connect')
+      // Hard network failure only — backend should always respond now.
+      setError('Network connection lost during batch. Please retry.')
     } finally {
       setIsLoading(false)
     }

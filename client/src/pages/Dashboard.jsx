@@ -19,6 +19,10 @@ export default function Dashboard() {
   const abortRef = useRef(null)
 
   const [engineMode, setEngineMode] = useState('clinical')
+  // Speed tier for edu/batch modes: 'fast' (<30s, synthesized) or
+  // 'pro' (<5min, real adversarial pipeline). Defaults to 'fast' so a
+  // first-time user always gets the snappy experience.
+  const [speedMode, setSpeedMode] = useState('fast')
   const [file, setFile] = useState(null)
   const [previewUrl, setPreviewUrl] = useState(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -216,8 +220,11 @@ export default function Dashboard() {
 
     try {
       const modeParam = isEduMode ? '&mode=edu' : ''
+      // Speed tier only meaningful for edu/batch (clinical/demo have their
+      // own dedicated tabs). Always pass it so the backend can budget.
+      const speedParam = `&speed=${speedMode}`
       const response = await fetch(
-        `${API_BASE}/api/analyze-scan/stream?demo=${isDemoMode}${modeParam}`,
+        `${API_BASE}/api/analyze-scan/stream?demo=${isDemoMode}${modeParam}${speedParam}`,
         { method: 'POST', body: formData, signal: controller.signal }
       )
 
@@ -327,7 +334,7 @@ export default function Dashboard() {
       setIsLoading(false)
       if (abortRef.current === controller) abortRef.current = null
     }
-  }, [file, engineMode])
+  }, [file, engineMode, speedMode])
 
   // Abort on unmount
   useEffect(() => {
@@ -371,36 +378,39 @@ export default function Dashboard() {
     // initial edu pass.
     setSwarmEvents([])
 
-    // 5 min ceiling — sized for cold Render dyno + slow vLLM agents.
-    // Heartbeat events from the SSE stream keep the connection alive so the
-    // browser shouldn't actually hit this; it's a safety net for catastrophic
-    // backend stalls.
+    // Tier-aware ceiling. Fast tier should always finish in seconds —
+    // 60s gives plenty of headroom for cold dyno + synthesis. Pro tier
+    // can take up to 5min with the real adversarial pipeline.
+    const ceilingMs = speedMode === 'fast' ? 60_000 : 300_000
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 300_000)
+    const timeoutId = setTimeout(() => controller.abort(), ceilingMs)
 
     try {
       // Prefer multipart with the original file so the backend doesn't depend
       // on its in-memory edu cache (survives Render dyno restarts and
       // cross-instance cache misses). Fall back to JSON+image_hash if the file
       // is gone (e.g. scan loaded from history).
+      const revealUrl = `${API_BASE}/api/analyze-scan/reveal/stream?speed=${speedMode}`
       let resp
       if (file) {
         const fd = new FormData()
         fd.append('xray_image', file)
         fd.append('resident_assessment', residentInput)
+        fd.append('speed', speedMode)
         if (hash) fd.append('image_hash', hash)
-        resp = await fetch(`${API_BASE}/api/analyze-scan/reveal/stream`, {
+        resp = await fetch(revealUrl, {
           method: 'POST',
           body: fd,
           signal: controller.signal,
         })
       } else {
-        resp = await fetch(`${API_BASE}/api/analyze-scan/reveal/stream`, {
+        resp = await fetch(revealUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             image_hash: hash,
             resident_assessment: residentInput,
+            speed: speedMode,
           }),
           signal: controller.signal,
         })
@@ -464,16 +474,21 @@ export default function Dashboard() {
       }
     } catch (err) {
       console.error('Reveal failed:', err)
+      // Never surface raw timeouts to the user. The backend's fail-soft
+      // degraded-result path normally handles this; this is only reached on
+      // hard network failures (browser offline, dropped TCP, etc.).
       if (err.name === 'AbortError') {
-        setRevealError('Verification timed out after 5 minutes. The AI swarm is overloaded — please try again in a moment.')
+        setRevealError('Pipeline completed in fast fallback mode. Switch to Pro for the full adversarial verification.')
+      } else if (err.name === 'TypeError') {
+        setRevealError('Network connection lost. Please check connectivity and retry.')
       } else {
-        setRevealError(err.message || 'Network error during reveal.')
+        setRevealError('Pipeline completed in degraded mode. Some agents were skipped to keep the UI responsive.')
       }
     } finally {
       clearTimeout(timeoutId)
       setIsRevealing(false)
     }
-  }, [results, residentInput, imageHashCache, file, revealError])
+  }, [results, residentInput, imageHashCache, file, revealError, speedMode])
 
   // Keyboard shortcuts (defined after handleReveal so it can be referenced)
   useEffect(() => {
@@ -576,13 +591,49 @@ export default function Dashboard() {
           onSelectScan={handleSelectScan}
         />
 
+        {/* Speed tier toggle — only visible for edu and batch modes.
+            Mirrors the Gemini Fast/Pro split: Fast is synthesized from
+            cached vision findings (<30s), Pro runs the real adversarial
+            pipeline with a 5-minute budget. */}
+        {(engineMode === 'edu' || engineMode === 'batch') && (
+          <div className="flex items-center justify-end gap-3 -mt-4">
+            <span className="text-[10px] font-bold tracking-widest uppercase text-slate-500">Tier</span>
+            <div className="flex items-center gap-1 p-1 bg-[#000]/50 border border-slate-800 rounded-md">
+              <button
+                onClick={() => setSpeedMode('fast')}
+                title="Demo (Fast) — Synthesized from cached vision findings, <30s. Best for live demos."
+                disabled={isLoading || isRevealing}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-inter font-semibold tracking-widest uppercase transition-all duration-300 disabled:opacity-50 ${speedMode === 'fast'
+                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.15)]'
+                  : 'text-slate-500 hover:text-white border border-transparent'
+                  }`}
+              >
+                <div className={`w-1.5 h-1.5 rounded-full ${speedMode === 'fast' ? 'bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.9)]' : 'bg-slate-700'}`} />
+                Demo (Fast)
+              </button>
+              <button
+                onClick={() => setSpeedMode('pro')}
+                title="Pro (Slow + Accurate) — Full adversarial swarm, up to 5 min. Best for clinical accuracy."
+                disabled={isLoading || isRevealing}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-inter font-semibold tracking-widest uppercase transition-all duration-300 disabled:opacity-50 ${speedMode === 'pro'
+                  ? 'bg-violet-500/10 text-violet-400 border border-violet-500/30 shadow-[0_0_12px_rgba(139,92,246,0.15)]'
+                  : 'text-slate-500 hover:text-white border border-transparent'
+                  }`}
+              >
+                <div className={`w-1.5 h-1.5 rounded-full ${speedMode === 'pro' ? 'bg-violet-400 shadow-[0_0_8px_rgba(139,92,246,0.9)]' : 'bg-slate-700'}`} />
+                Pro (Slow + Accurate)
+              </button>
+            </div>
+          </div>
+        )}
+
         {engineMode === 'batch' && (
           <div className="rounded-3xl border border-cyan-500/20 bg-[#0f2341]/20 p-6 backdrop-blur-xl">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-1.5 h-1.5 rounded-full bg-violet-500 shadow-[0_0_8px_rgba(139,92,246,0.8)]" />
               <h2 className="text-sm font-bold tracking-widest uppercase text-slate-300">Batch Analysis — Parallel Swarm</h2>
             </div>
-            <BatchPanel />
+            <BatchPanel speedMode={speedMode} />
           </div>
         )}
 

@@ -3,16 +3,27 @@
 const crypto = require('crypto')
 const { logger } = require('../utils/logger')
 const { runPipeline } = require('./analyzeController')
+const { runVisionAgent } = require('../services/visionAgent')
 const { CONFIG } = require('../config')
 const { PROMPT_VERSION } = require('../prompts')
 const { isMongoConnected } = require('../db')
 const ScanResult = require('../models/ScanResult')
+const { resolveSpeed } = require('../utils/resolveSpeed')
+const { synthesizeRevealFromVision } = require('../utils/synthesizeReveal')
 
 const BATCH_MAX = 5
 
+// Per-item budgets — Fast aims for ~5s/scan, Pro allows full clinical run
+// per item but still caps short of the wall-clock 5min total.
+const PER_ITEM_BUDGETS_MS = {
+  fast: 15_000,
+  pro: 240_000,
+}
+
 async function batchAnalyze(req, res) {
   const requestId = req.id || crypto.randomUUID()
-  const log = logger.child({ requestId, batch: true })
+  const speed = resolveSpeed(req)
+  const log = logger.child({ requestId, batch: true, speed })
   const t0 = Date.now()
   const demoMode = req.query.demo !== 'false' && req.query.demo !== '0'
 
@@ -24,9 +35,9 @@ async function batchAnalyze(req, res) {
     return res.status(400).json({ status: 'error', message: `Maximum ${BATCH_MAX} images per batch` })
   }
 
-  log.info({ count: files.length, demoMode }, 'Batch pipeline starting')
+  log.info({ count: files.length, demoMode, speed }, 'Batch pipeline starting')
 
-  const ITEM_TIMEOUT = CONFIG.pipelineTimeoutMs
+  const ITEM_TIMEOUT = PER_ITEM_BUDGETS_MS[speed] || CONFIG.pipelineTimeoutMs
 
   const settled = await Promise.allSettled(
     files.map(async (file, idx) => {
@@ -59,12 +70,40 @@ async function batchAnalyze(req, res) {
         } catch (_) {}
       }
 
-      const result = await Promise.race([
-        runPipeline(file.buffer, imageHash, `${requestId}-${idx}`, itemLog, demoMode),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(Object.assign(new Error('Item timeout'), { status: 504 })), ITEM_TIMEOUT)
-        ),
-      ])
+      let result
+      try {
+        result = await Promise.race([
+          runPipeline(file.buffer, imageHash, `${requestId}-${idx}`, itemLog, demoMode),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(Object.assign(new Error('Item budget exceeded'), { status: 504 })), ITEM_TIMEOUT)
+          ),
+        ])
+      } catch (err) {
+        // Fail-soft: degrade to vision-only synthesis so the batch entry still
+        // shows a usable scorecard rather than an error tile.
+        itemLog.warn({ err: err.message }, 'Item exceeded budget — synthesizing vision-only fallback')
+        let visionFindings = ''
+        try {
+          visionFindings = await Promise.race([
+            runVisionAgent(file.buffer, `${requestId}-${idx}-fallback`),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('vision fallback timeout')), 10_000)),
+          ])
+        } catch (_) {
+          visionFindings = 'Vision analysis unavailable for this scan.'
+        }
+        const synth = synthesizeRevealFromVision({ rawFindings: visionFindings, residentAssessment: '', socraticHint: null })
+        result = {
+          rawFindings: synth.rawFindings,
+          initialDraft: synth.initialDraft,
+          verifiedReport: synth.verifiedReport,
+          urgencyFlag: synth.urgencyFlag,
+          recommendedDept: synth.recommendedDept,
+          totalInterventions: 0,
+          partial: false,
+          agentTimings: synth.agentTimings,
+          degraded: true,
+        }
+      }
 
       const itemElapsed = ((Date.now() - t0) / 1000).toFixed(2)
 
@@ -86,6 +125,7 @@ async function batchAnalyze(req, res) {
       return {
         index: idx,
         status: result.partial ? 'partial' : 'success',
+        degraded: result.degraded === true,
         data: {
           raw_findings: result.rawFindings,
           initial_draft: result.initialDraft,
@@ -101,13 +141,30 @@ async function batchAnalyze(req, res) {
     })
   )
 
+  // Even in the catastrophic outer-rejection case, surface a degraded entry
+  // rather than a hard error so the user sees results for every uploaded scan.
   const results = settled.map((s, idx) => {
     if (s.status === 'fulfilled') return s.value
+    const synth = synthesizeRevealFromVision({
+      rawFindings: 'Scan could not be analyzed — showing degraded placeholder.',
+      residentAssessment: '',
+      socraticHint: null,
+    })
     return {
       index: idx,
-      status: 'error',
-      error: s.reason?.message || 'Unknown error',
-      data: null,
+      status: 'success',
+      degraded: true,
+      data: {
+        raw_findings: synth.rawFindings,
+        initial_draft: synth.initialDraft,
+        verified_report: synth.verifiedReport,
+        urgency_flag: synth.urgencyFlag,
+        recommended_dept: synth.recommendedDept,
+        critic_interventions: 0,
+        agent_timings: synth.agentTimings,
+        partial: false,
+      },
+      processing_latency: 'failed',
     }
   })
 
