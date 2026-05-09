@@ -34,8 +34,8 @@ The Hyperion Engine operates on a 3-Node localized network.
 ```mermaid
 graph TD
     A[Raw X-Ray / MRI Scan] -->|Input| B(Node 1: Edge Vision)
-    B -->|Extracts Geometry via LLaVA| C{Node 2: The Drafter}
-    C -->|Synthesizes Preliminary Findings via DeepSeek| D(Node 3: The Critic)
+    B -->|Extracts Geometry via LLaVA / OpenGV LLaVA| C{Node 2: The Drafter}
+    C -->|Synthesizes Preliminary Findings via DeepSeek / Meditron| D(Node 3: The Critic)
     D -->|Adversarial Audit: Compares Draft to Raw Pixels| C
     D -->|100% Consensus Reached| E[Verified Diagnostic Report]
     
@@ -50,11 +50,11 @@ graph TD
     class E output
 ```
 
-### 1. Edge Vision (LLaVA)
-A lightweight, multimodal agent dedicated entirely to geometry extraction. It doesn't diagnose; it maps pixel variances natively on GPU hardware without internet access.
+### 1. Edge Vision (LLaVA / OpenGV LLaVA)
+A lightweight, multimodal agent dedicated entirely to geometry extraction. It doesn't diagnose; it maps pixel variances natively on GPU hardware without internet access. Supported models include standard LLaVA and OpenGV LLaVA.
 
-### 2. Drafter Node (DeepSeek)
-Takes the raw structural data from the Vision Node and cross-references it against an embedded clinical knowledge base to write a preliminary impression.
+### 2. Drafter Node (DeepSeek / Meditron)
+Takes the raw structural data from the Vision Node and cross-references it against an embedded clinical knowledge base to write a preliminary impression. Powered by advanced reasoning models like DeepSeek and Meditron.
 
 ### 3. Critic Override
 An independent auditor checks the draft against the raw data, violently rejecting hallucinations. A report is only finalized when the network reaches 100% consensus.
@@ -76,7 +76,7 @@ Hyperion ships with two distinct operational modes, easily toggled from the Reac
 
 * **Frontend:** React, Tailwind CSS v4, Framer Motion (Physics-based cinematic UI).
 * **Backend Orchestration:** Node.js, Express, Multer (File Handling).
-* **AI Engine:** Ollama (Local LLaVA execution), DeepSeek API (Reasoning Nodes).
+* **AI Engine:** Ollama (Local LLaVA and OpenGV LLaVA execution), DeepSeek API & Meditron (Reasoning Nodes).
 * **Design System:** Deep-Space Glassmorphism, Custom SVG animated iconography.
 
 ---

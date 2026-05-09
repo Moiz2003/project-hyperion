@@ -1,0 +1,465 @@
+.hyperion-product-page {
+    font-family: 'Manrope', sans-serif;
+    color: #ffffff;
+    --primary: #00D4FF;
+    --primary-dark: #0099CC;
+    --secondary: #1a1f35;
+    --surface: #0f1419;
+    --surface-alt: #151b2f;
+    --text-primary: #ffffff;
+    --text-secondary: #cbd5e1;
+    --accent-green: #10b981;
+    --accent-orange: #f97316;
+}
+
+.hyperion-product-page .product-hero {
+    padding: 4rem 3rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.hyperion-product-page .product-header {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 4rem;
+    align-items: center;
+    margin-bottom: 4rem;
+}
+
+.hyperion-product-page .product-header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 1.5rem;
+}
+
+.hyperion-product-page .product-header h1 .highlight {
+    background: linear-gradient(135deg, var(--primary), #00f0ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hyperion-product-page .product-tagline {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+    line-height: 1.7;
+}
+
+.hyperion-product-page .product-stats {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+}
+
+.hyperion-product-page .stat-block {
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(124, 58, 237, 0.05));
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    border-radius: 12px;
+    padding: 1.5rem;
+    min-width: 140px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.hyperion-product-page .stat-value {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--primary);
+}
+
+.hyperion-product-page .stat-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 0.5rem;
+}
+
+.hyperion-product-page .product-image {
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.05), rgba(124, 58, 237, 0.05));
+    padding: 2rem;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: var(--text-secondary);
+}
+
+/* Tabs */
+.hyperion-product-page .tabs-container {
+    margin-top: 4rem;
+}
+
+.hyperion-product-page .tabs {
+    display: flex;
+    gap: 1rem;
+    border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+    margin-bottom: 2rem;
+    overflow-x: auto;
+}
+
+.hyperion-product-page .tab-btn {
+    padding: 1rem 2rem;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-weight: 600;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s;
+    white-space: nowrap;
+}
+
+.hyperion-product-page .tab-btn.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
+.hyperion-product-page .tab-btn:hover {
+    color: var(--primary);
+}
+
+.hyperion-product-page .tab-content {
+    display: none;
+}
+
+.hyperion-product-page .tab-content.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Features Section */
+.hyperion-product-page .features-section {
+    padding: 4rem 3rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.hyperion-product-page .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin-bottom: 3rem;
+}
+
+.hyperion-product-page .feature-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.hyperion-product-page .feature-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: center;
+    padding: 2rem;
+    border: 1px solid rgba(0, 212, 255, 0.1);
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.02), rgba(124, 58, 237, 0.02));
+}
+
+.hyperion-product-page .feature-row.alt {
+    grid-template-columns: 1fr 1fr;
+}
+
+.hyperion-product-page .feature-row.alt .feature-text {
+    order: 2;
+}
+
+.hyperion-product-page .feature-row.alt .feature-visual {
+    order: 1;
+}
+
+.hyperion-product-page .feature-visual {
+    border: 1px dashed rgba(0, 212, 255, 0.2);
+    border-radius: 8px;
+    padding: 2rem;
+    background: rgba(0, 0, 0, 0.3);
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.hyperion-product-page .feature-text h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+.hyperion-product-page .feature-text h3 .accent {
+    color: var(--primary);
+}
+
+.hyperion-product-page .feature-text p {
+    color: var(--text-secondary);
+    line-height: 1.8;
+    margin-bottom: 1.5rem;
+}
+
+.hyperion-product-page .feature-list {
+    list-style: none;
+    margin-top: 1.5rem;
+    padding: 0;
+}
+
+.hyperion-product-page .feature-list li {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    color: var(--text-secondary);
+}
+
+.hyperion-product-page .feature-list li::before {
+    content: '→';
+    color: var(--primary);
+    font-weight: 700;
+    min-width: 20px;
+}
+
+/* Use Cases */
+.hyperion-product-page .use-cases {
+    padding: 4rem 3rem;
+    background: linear-gradient(180deg, rgba(0, 212, 255, 0.02), transparent);
+}
+
+.hyperion-product-page .use-cases-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.hyperion-product-page .use-cases-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.hyperion-product-page .use-case-card {
+    border: 1px solid rgba(0, 212, 255, 0.1);
+    border-radius: 12px;
+    padding: 2rem;
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.05), rgba(124, 58, 237, 0.05));
+    transition: all 0.3s;
+}
+
+.hyperion-product-page .use-case-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+    transform: translateY(-4px);
+}
+
+.hyperion-product-page .use-case-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(0, 212, 255, 0.1);
+    border: 1.5px solid var(--primary);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.hyperion-product-page .use-case-card h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+.hyperion-product-page .use-case-card p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* Specifications */
+.hyperion-product-page .specs {
+    padding: 4rem 3rem;
+}
+
+.hyperion-product-page .specs-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.hyperion-product-page .specs-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.hyperion-product-page .spec-card {
+    border: 1px solid rgba(0, 212, 255, 0.1);
+    border-radius: 8px;
+    padding: 2rem;
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.02), rgba(124, 58, 237, 0.02));
+    text-align: center;
+}
+
+.hyperion-product-page .spec-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
+}
+
+.hyperion-product-page .spec-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+/* Comparison */
+.hyperion-product-page .comparison {
+    padding: 4rem 3rem;
+    background: linear-gradient(180deg, transparent, rgba(0, 212, 255, 0.02));
+}
+
+.hyperion-product-page .comparison-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.hyperion-product-page .comparison-table {
+    width: 100%;
+    margin-top: 2rem;
+    border-collapse: collapse;
+}
+
+.hyperion-product-page .comparison-table th {
+    text-align: left;
+    padding: 1.5rem;
+    border-bottom: 2px solid rgba(0, 212, 255, 0.2);
+    font-weight: 700;
+    background: rgba(0, 212, 255, 0.05);
+}
+
+.hyperion-product-page .comparison-table td {
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+}
+
+.hyperion-product-page .comparison-table tr:hover {
+    background: rgba(0, 212, 255, 0.02);
+}
+
+.hyperion-product-page .check {
+    color: var(--accent-green);
+    font-weight: 700;
+}
+
+.hyperion-product-page .close {
+    color: var(--text-secondary);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .hyperion-product-page .product-header {
+        grid-template-columns: 1fr;
+    }
+
+    .hyperion-product-page .product-header h1 {
+        font-size: 2rem;
+    }
+
+    .hyperion-product-page .feature-row {
+        grid-template-columns: 1fr;
+    }
+
+    .hyperion-product-page .feature-row.alt .feature-text {
+        order: 1;
+    }
+
+    .hyperion-product-page .feature-row.alt .feature-visual {
+        order: 2;
+    }
+
+    .hyperion-product-page .use-cases-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .hyperion-product-page .specs-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .hyperion-product-page .tabs {
+        flex-wrap: wrap;
+    }
+
+    .hyperion-product-page .comparison-table,
+    .hyperion-product-page .comparison-table tbody,
+    .hyperion-product-page .comparison-table tr,
+    .hyperion-product-page .comparison-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .hyperion-product-page .comparison-table thead {
+        display: none;
+    }
+
+    .hyperion-product-page .comparison-table tr {
+        margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, rgba(0, 212, 255, 0.02), rgba(124, 58, 237, 0.02));
+        border: 1px solid rgba(0, 212, 255, 0.1);
+        border-radius: 8px;
+        padding: 1rem;
+    }
+
+    .hyperion-product-page .comparison-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid rgba(0, 212, 255, 0.05);
+        text-align: right;
+    }
+    
+    .hyperion-product-page .comparison-table td:last-child {
+        border-bottom: none;
+    }
+
+    .hyperion-product-page .comparison-table td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        color: var(--text-secondary);
+        text-align: left;
+        margin-right: 1rem;
+    }
+
+    .hyperion-product-page .comparison-table td:first-child {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--primary);
+        justify-content: center;
+        border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+        margin-bottom: 0.5rem;
+    }
+    
+    .hyperion-product-page .comparison-table td:first-child::before {
+        display: none;
+    }
+
+    .hyperion-product-page dl.specs-grid dd {
+        margin-left: 0;
+    }
+}

@@ -23,7 +23,7 @@ export const solutionContent = {
     title: 'Rural Clinics / Low-resource Settings',
     subtitle: 'High-value triage where infrastructure is limited',
     description:
-      'Hyperion is optimized for constrained environments where specialist access and network reliability are inconsistent, helping frontline teams prioritize urgent cases faster.',
+      'In resource-limited settings (rural hospitals, urgent care centers, developing regions), general practitioners often lack immediate access to radiologists. X-rays can be misread or missed, delaying diagnosis of critical conditions like pneumonia, early-stage breast cancer, or tuberculosis. Hyperion helps frontline teams triage faster with offline, evidence-checked outputs.',
     featureCards: [
       {
         title: 'Offline-first Operation',

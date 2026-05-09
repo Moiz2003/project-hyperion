@@ -29,18 +29,17 @@ export default function ResultsPanel({
     <div className="flex flex-col gap-6 relative">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-3">
-          <HUDIcons.Check />
-          <h2 className="text-sm font-inter font-semibold tracking-widest uppercase text-slate-300">Swarm Output</h2>
+          <HUDIcons.Clipboard />
+          <h2 className="text-sm font-inter font-semibold tracking-widest uppercase text-slate-300">Verified Report</h2>
         </div>
         <div className="flex items-center gap-3">
           {hasDiff && !isLoading && (
             <button
               onClick={() => setShowComparison(v => !v)}
-              className={`text-[10px] font-bold tracking-widest uppercase px-3 py-1 rounded-full border transition-all ${
-                showComparison
-                  ? 'bg-amber-950/40 border-amber-500/50 text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.3)]'
-                  : 'border-slate-700 text-slate-500 hover:text-slate-300 hover:border-slate-600'
-              }`}
+              className={`text-[10px] font-bold tracking-widest uppercase px-4 py-2 rounded-lg border transition-all ${showComparison
+                ? 'bg-amber-950/40 border-amber-500/50 text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.3)]'
+                : 'bg-slate-900/40 border-slate-800 text-slate-500 hover:text-slate-300 hover:bg-slate-800'
+                }`}
             >
               {showComparison ? 'Hide Diff' : 'Before / After'}
             </button>
@@ -53,8 +52,8 @@ export default function ResultsPanel({
         </div>
       </div>
 
-      <div className={`flex-1 relative rounded-3xl border transition-colors duration-500 overflow-hidden backdrop-blur-xl shadow-2xl
-        ${results ? 'border-indigo-500/30 bg-indigo-950/10' : 'border-slate-800 bg-slate-900/40'}
+      <div className={`flex-1 relative rounded-lg border transition-colors duration-500 overflow-hidden backdrop-blur-xl shadow-2xl
+        ${results ? 'border-cyan-500/20 bg-[#0f2341]/40' : 'border-slate-800 bg-[#000]/20'}
       `}>
         {!isLoading && !results && (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-600">
@@ -63,7 +62,20 @@ export default function ResultsPanel({
           </div>
         )}
 
-        {isLoading && <LoadingOverlay loadingText={loadingText} />}
+        {isLoading && (
+          <>
+            <LoadingOverlay loadingText={loadingText} />
+            <div className="absolute inset-0 p-8 flex flex-col gap-8 opacity-20 pointer-events-none z-0">
+              <div className="flex gap-4">
+                <div className="h-8 w-32 bg-slate-700 rounded-full animate-pulse" />
+                <div className="h-8 w-40 bg-slate-700 rounded-full animate-pulse" />
+                <div className="h-8 w-24 bg-slate-700 rounded-full animate-pulse ml-auto" />
+              </div>
+              <div className="h-32 w-full bg-slate-700 rounded-xl animate-pulse" />
+              <div className="flex-1 w-full bg-slate-700 rounded-lg animate-pulse" />
+            </div>
+          </>
+        )}
 
         {results && !isLoading && (
           <div className="p-8 h-full flex flex-col gap-8 animate-[fadeIn_0.5s_ease-out] overflow-y-auto relative z-0">
@@ -86,14 +98,14 @@ export default function ResultsPanel({
                     value={residentInput}
                     onChange={(e) => onResidentInput(e.target.value)}
                     placeholder="Enter your clinical findings..."
-                    className="w-full min-h-[150px] bg-[#000] border border-slate-700 rounded-xl p-4 text-slate-300 font-mono text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors mb-6 resize-y"
+                    className="w-full min-h-[150px] bg-[#000] border border-slate-700 rounded-xl p-4 text-slate-300 font-mono text-sm focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/50 transition-colors mb-6 resize-y"
                   />
 
                   {hint && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="mb-6 p-4 rounded-xl bg-indigo-950/50 border border-indigo-500/50 text-indigo-300 text-sm font-mono flex items-start gap-3 shadow-[0_0_20px_rgba(99,102,241,0.1)]"
+                      className="mb-6 p-4 rounded-xl bg-cyan-950/30 border border-cyan-400/30 text-cyan-300 text-sm font-mono flex items-start gap-3 shadow-[0_0_20px_rgba(34,211,238,0.1)]"
                     >
                       <HUDIcons.Sparkles />
                       {hint}
@@ -104,14 +116,14 @@ export default function ResultsPanel({
                     <button
                       onClick={onRequestHint}
                       disabled={isHintLoading || !!hint}
-                      className="px-6 py-4 rounded-xl border border-indigo-500/50 text-indigo-400 font-inter font-semibold text-xs tracking-widest uppercase hover:bg-indigo-950/50 transition-colors flex items-center gap-2 disabled:opacity-50"
+                      className="px-6 py-4 rounded-lg border border-slate-700 bg-slate-900/40 text-slate-300 font-inter font-bold text-[10px] tracking-widest uppercase hover:bg-slate-800 transition-all disabled:opacity-50"
                     >
                       {isHintLoading ? 'Computing...' : 'Request Hint'}
                     </button>
                     <button
                       onClick={onReveal}
                       disabled={!residentInput.trim()}
-                      className="flex-1 py-4 rounded-xl bg-emerald-500 text-[#020617] font-inter font-semibold text-xs tracking-widest uppercase hover:bg-emerald-400 hover:shadow-[0_0_30px_rgba(52,211,153,0.4)] transition-all disabled:opacity-50 disabled:bg-slate-800 disabled:text-slate-500 disabled:hover:shadow-none"
+                      className="flex-1 py-4 rounded-lg bg-gradient-to-r from-cyan-400 to-blue-500 text-[#0a1628] font-inter font-bold text-[10px] tracking-widest uppercase hover:opacity-90 hover:shadow-[0_0_30px_rgba(0,217,255,0.2)] transition-all disabled:opacity-50 disabled:bg-slate-800 disabled:text-slate-500 disabled:hover:shadow-none"
                     >
                       Verify Findings
                     </button>
@@ -126,36 +138,176 @@ export default function ResultsPanel({
 
             <div className={`space-y-8 flex-1 transition-all duration-700 ${engineMode === 'discovery' && !isRevealed ? 'blur-xl opacity-20 pointer-events-none select-none' : ''}`}>
 
+              {/* Top Status Badges */}
               <div className="flex flex-wrap items-center gap-4">
-                <div className={`px-4 py-2 rounded-full border text-xs font-bold tracking-widest uppercase flex items-center gap-2 shadow-lg backdrop-blur-md
+                <div className={`px-4 py-1 rounded-full border text-[10px] font-bold tracking-widest uppercase flex items-center gap-2 shadow-lg backdrop-blur-md
                   ${results.urgency_flag === 'High'
-                    ? 'bg-red-950/50 border-red-500 text-red-400 shadow-[0_0_20px_rgba(239,68,68,0.4)] animate-pulse'
-                    : 'bg-emerald-950/50 border-emerald-500/50 text-emerald-400'
+                    ? 'bg-red-950/20 border-red-500/30 text-red-400'
+                    : 'bg-emerald-950/20 border-emerald-500/30 text-emerald-400'
                   }`}
                 >
                   <HUDIcons.Alert />
-                  {results.urgency_flag} URGENCY
+                  {results.urgency_flag || 'Low'} Urgency
                 </div>
 
-                <div className="px-4 py-2 rounded-full bg-slate-950 border border-slate-800 text-slate-300 text-xs font-bold tracking-widest uppercase flex items-center gap-2">
+                <div className="px-4 py-2 rounded-full bg-[#000]/40 border border-slate-800 text-slate-300 text-[10px] font-bold tracking-widest uppercase flex items-center gap-2">
                   <HUDIcons.MapPin />
-                  {results.recommended_dept}
+                  {results.recommended_dept || 'Internal Medicine'}
                 </div>
 
-                <div className="px-4 py-2 rounded-full bg-slate-950 border border-slate-800 text-slate-400 text-xs font-mono flex items-center gap-2 ml-auto">
+                <div className="px-4 py-2 rounded-full bg-[#000]/40 border border-slate-800 text-slate-400 text-[10px] font-mono flex items-center gap-2 ml-auto">
                   <HUDIcons.Clock />
-                  {results.processing_latency}
+                  {results.processing_latency || '0.0s'}
                 </div>
               </div>
 
+              {/* Vision Agent Raw Geometry */}
               <div className="space-y-4">
-                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-3">
+                {/* <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(34,211,238,0.8)]"></div>
                   Vision Agent Raw Geometry
-                </h4>
-                <div className="p-6 rounded-2xl bg-[#000] border border-slate-800 text-slate-400 font-mono text-sm leading-relaxed relative overflow-hidden">
-                  <div className="absolute top-0 left-0 w-1 h-full bg-cyan-500/50"></div>
-                  {results.raw_findings}
+                </h4> */}
+                <div className="p-6 rounded-lg border border-cyan-500/20 bg-[#0f2341]/80 shadow-[inset_0_0_30px_rgba(0,0,0,0.3)]">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-cyan-500/30"></div>
+                  <h3 className="text-sm font-bold text-white mb-4">Vision Agent Raw Geometry</h3>
+                  <p className="font-light text-sm text-slate-400">{results.raw_findings}</p>
+                </div>
+              </div>
+
+              {/* Final Verified Consensus / Clinical Findings */}
+              <div className="space-y-4">
+                {/* <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(52,211,153,0.8)]"></div>
+                  Final Verified Consensus
+                </h4> */}
+
+                <div className="p-6 rounded-lg border border-cyan-500/20 bg-[#0f2341]/80 shadow-[inset_0_0_30px_rgba(0,0,0,0.3)]">
+                  {/* Summary and Recommendations */}
+                  <div className="mb-8">
+                    <h3 className="text-sm font-bold text-white mb-4">Summary</h3>
+                    {(() => {
+                      const text = results.verified_report || "";
+                      let summary = "";
+                      let recommendations = [];
+
+                      // Match numbered sections safely
+                      const sections = {};
+                      const regex = /\((\d)\)\s*([\s\S]*?)(?=\(\d\)\s|$)/g;
+
+                      let match;
+                      while ((match = regex.exec(text)) !== null) {
+                        sections[match[1]] = match[2].trim();
+                      }
+
+                      // ===== SUMMARY =====
+                      const summaryParts = [];
+
+                      // Section 1
+                      if (sections["1"]) {
+                        const clean1 = sections["1"]
+                          .replace(/^(Summary of Findings|Summary)\s*[:\-]?\s*/i, "")
+                          .replace(/\s+/g, " ")
+                          .trim();
+
+                        summaryParts.push(clean1);
+                      }
+
+                      // Section 2
+                      if (sections["2"]) {
+                        const clean2 = sections["2"]
+                          .replace(/^(Differential Diagnosis|Differential)\s*[:\-]?\s*/i, "")
+                          // Remove numbered diagnosis bullets
+                          .replace(/\d+\.\s*/g, "")
+                          // Remove extra dashes
+                          .replace(/\s+—\s+/g, " — ")
+                          // Flatten whitespace
+                          .replace(/\n/g, " ")
+                          .replace(/\s+/g, " ")
+                          .trim();
+
+                        summaryParts.push(clean2);
+                      }
+
+                      if (summaryParts.length > 0) {
+                        summary = summaryParts.join(" ");
+                      } else {
+                        // Fallback: If no numbered sections, try to split by common recommendation headers
+                        const splitText = text.split(/(?:Recommendations|Workup|Action[s]?|Plan)\s*:/i);
+                        if (splitText.length > 1) {
+                          summary = splitText[0].replace(/\*\*Summary.*?\*\*/i, "").trim();
+                          sections["3"] = splitText[1]; // Feed into recommendations parser below
+                        } else {
+                          summary = text.trim();
+                        }
+                      }
+
+                      // ===== RECOMMENDATIONS =====
+                      const recText = [sections["3"], sections["4"]]
+                        .filter(Boolean)
+                        .join("\n");
+
+                      if (recText) {
+                        recommendations = recText
+                          .split("\n")
+                          .map((line) => line.trim())
+                          .filter(
+                            (line) =>
+                              line.startsWith("-") ||
+                              line.startsWith("*") ||
+                              /^\d+\./.test(line)
+                          )
+                          .map((line) =>
+                            line
+                              .replace(/^[-*]\s*/, "")
+                              .replace(/^\d+\.\s*/, "")
+                              .trim()
+                          );
+                      }
+
+                      return (
+                        <>
+                          <p className="text-slate-300 text-sm leading-relaxed font-light mb-6">
+                            {summary}
+                          </p>
+
+                          {recommendations.length > 0 && (
+                            <>
+                              <div className="h-px w-full bg-slate-800/50 mb-6"></div>
+
+                              <h3 className="text-sm font-bold text-white mb-4">
+                                Recommendations
+                              </h3>
+
+                              <div className="space-y-2">
+                                {recommendations.map((item, i) => (
+                                  <p
+                                    key={i}
+                                    className="text-slate-300 text-sm leading-relaxed"
+                                  >
+                                    <span className="text-slate-400 mr-2">•</span>
+                                    {item}
+                                  </p>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Badges at the bottom of findings box */}
+                  <div className="flex flex-wrap items-center gap-3 pt-6 border-t border-slate-800/50">
+                    <div className="px-4 py-1.5 rounded-md border border-cyan-500/30 bg-cyan-500/5 text-cyan-400 text-[10px] font-medium">
+                      Confidence: <span className="font-bold">{confidenceScore(results)}</span>
+                    </div>
+                    <div className="px-4 py-1.5 rounded-md border border-cyan-500/30 bg-cyan-500/5 text-cyan-400 text-[10px] font-medium">
+                      Interventions: <span className="font-bold">{results.critic_interventions}</span>
+                    </div>
+                    <div className="px-4 py-1.5 rounded-md border border-cyan-500/30 bg-cyan-500/5 text-cyan-400 text-[10px] font-medium">
+                      Risk Level: <span className="font-bold">{results.urgency_flag || 'Low'}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -168,64 +320,32 @@ export default function ResultsPanel({
                     exit={{ opacity: 0, height: 0 }}
                     className="space-y-3 overflow-hidden"
                   >
-                    <h4 className="text-xs font-bold text-amber-500 uppercase tracking-widest flex items-center gap-3">
-                      <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)]"></div>
+                    <h4 className="text-[10px] font-bold text-amber-500 uppercase tracking-widest flex items-center gap-2">
+                      <div className="w-1 h-1 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)]"></div>
                       Initial Draft (Pre-Critic)
                     </h4>
-                    <div className="p-6 rounded-2xl bg-amber-950/10 border border-amber-500/20 text-slate-400 font-medium text-sm leading-relaxed relative overflow-hidden">
-                      <div className="absolute top-0 left-0 w-1 h-full bg-amber-500/50"></div>
-                      <div className="text-[10px] font-mono text-amber-600 uppercase tracking-widest mb-3">Before Critic Review</div>
+                    <div className="p-4 rounded-md bg-amber-950/10 border border-amber-500/20 text-slate-400 font-medium text-sm leading-relaxed relative overflow-hidden">
+                      <div className="text-[9px] font-mono text-amber-600 uppercase tracking-widest mb-2">Before Critic Review</div>
                       {results.initial_draft}
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              <div className="space-y-4">
-                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(52,211,153,0.8)]"></div>
-                  Final Verified Consensus
-                  {showComparison && hasDiff && (
-                    <span className="text-[9px] font-bold text-emerald-600 border border-emerald-700 px-2 py-0.5 rounded-full">After Critic Review</span>
-                  )}
-                </h4>
-                <div className="p-6 rounded-2xl bg-indigo-950/20 border border-indigo-500/30 text-slate-200 font-medium text-lg leading-relaxed relative overflow-hidden shadow-[0_0_30px_rgba(99,102,241,0.05)]">
-                  <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,1)]"></div>
-                  {results.verified_report}
-                </div>
-              </div>
-
-              {/* Agent timings */}
-              {results.agent_timings && (
-                <div className="flex flex-wrap gap-2">
-                  {Object.entries(results.agent_timings).map(([k, v]) => (
-                    <span key={k} className="text-[10px] font-mono px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-slate-500">
-                      <span className="text-slate-600">{k}:</span> <span className="text-slate-400">{v}</span>
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              <div className="pt-6 border-t border-slate-800/50 flex items-center justify-between text-xs font-mono uppercase tracking-widest">
-                <span className="text-slate-500">
-                  Critic Interventions: <strong className="text-cyan-400 font-inter font-bold text-sm ml-2">{results.critic_interventions}</strong>
-                </span>
-                <div className="flex items-center gap-4">
-                  <span className="relative group flex items-center gap-2 text-slate-500 cursor-default">
-                    Confidence: <strong className="text-emerald-400 text-sm">{confidenceScore(results)}</strong>
-                    <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-[10px] font-mono text-slate-400 leading-relaxed opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 shadow-xl whitespace-normal text-center">
-                      {confidenceTooltip(results)}
-                    </div>
-                  </span>
-                  <button
-                    onClick={onDownloadPDF}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-950/40 border border-indigo-500/40 text-indigo-400 hover:bg-indigo-500 hover:text-white transition-all text-[10px] font-bold tracking-widest uppercase shadow-lg"
-                    title="Download Clinical Report"
-                  >
-                    <HUDIcons.Download />
-                    Download Report
-                  </button>
-                </div>
+              {/* Action Buttons at bottom of panel */}
+              <div className="pt-4 flex items-center gap-4">
+                <button
+                  onClick={() => { }}
+                  className="flex-1 py-4 rounded-lg bg-gradient-to-r from-cyan-400 to-blue-500 text-[#0a1628] font-bold text-[10px] tracking-widest uppercase hover:opacity-90 hover:shadow-[0_0_30px_rgba(0,217,255,0.2)] transition-all"
+                >
+                  Save Analysis
+                </button>
+                <button
+                  onClick={onDownloadPDF}
+                  className="flex-1 py-4 rounded-lg bg-slate-900/40 border border-slate-800 text-slate-300 font-bold text-[10px] tracking-widest uppercase hover:bg-slate-800 transition-all"
+                >
+                  Download Report
+                </button>
               </div>
             </div>
           </div>
