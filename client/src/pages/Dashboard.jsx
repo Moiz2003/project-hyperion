@@ -366,12 +366,17 @@ export default function Dashboard() {
     }
     setIsRevealing(true)
     setRevealError(null)
+    // Reset the swarm visualizer so it shows live reveal-pipeline activity
+    // (vision/drafter/critic events) instead of stale events from the
+    // initial edu pass.
+    setSwarmEvents([])
 
-    // Client-side timeout — backend pipeline can hang on slow agents and Render
-    // may drop the connection silently. 120s gives a comfortable margin over
-    // the typical ~30-60s single-pass clinical run.
+    // 5 min ceiling — sized for cold Render dyno + slow vLLM agents.
+    // Heartbeat events from the SSE stream keep the connection alive so the
+    // browser shouldn't actually hit this; it's a safety net for catastrophic
+    // backend stalls.
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 120_000)
+    const timeoutId = setTimeout(() => controller.abort(), 300_000)
 
     try {
       // Prefer multipart with the original file so the backend doesn't depend
@@ -384,13 +389,13 @@ export default function Dashboard() {
         fd.append('xray_image', file)
         fd.append('resident_assessment', residentInput)
         if (hash) fd.append('image_hash', hash)
-        resp = await fetch(`${API_BASE}/api/analyze-scan/reveal`, {
+        resp = await fetch(`${API_BASE}/api/analyze-scan/reveal/stream`, {
           method: 'POST',
           body: fd,
           signal: controller.signal,
         })
       } else {
-        resp = await fetch(`${API_BASE}/api/analyze-scan/reveal`, {
+        resp = await fetch(`${API_BASE}/api/analyze-scan/reveal/stream`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -401,34 +406,66 @@ export default function Dashboard() {
         })
       }
 
-      let json = null
-      try { json = await resp.json() } catch (_) { /* non-JSON response */ }
-
-      if (!resp.ok && json?.status !== 'partial') {
-        const msg = json?.message || `Reveal failed (HTTP ${resp.status})`
+      if (!resp.ok) {
+        let msg = `Reveal failed (HTTP ${resp.status})`
+        try { const d = await resp.json(); if (d?.message) msg = d.message } catch (_) { /* non-JSON */ }
         setRevealError(msg)
         return
       }
 
-      if (json && (json.status === 'success' || json.status === 'partial') && json.data) {
-        setResults(prev => ({
-          ...prev,
-          verified_report: json.data.verified_report,
-          initial_draft: json.data.initial_draft || prev?.initial_draft,
-          urgency_flag: json.data.urgency_flag,
-          recommended_dept: json.data.recommended_dept,
-          critic_interventions: json.data.critic_interventions,
-          diagnosis_match: json.data.diagnosis_match,
-        }))
-        setDiagnosisMatch(json.data.diagnosis_match)
-        setIsRevealed(true)
-      } else {
-        setRevealError(json?.message || 'Reveal returned an unexpected response.')
+      const reader = resp.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let completed = false
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+
+        const frames = buffer.split('\n\n')
+        buffer = frames.pop() || ''
+
+        for (const frame of frames) {
+          const eventLine = frame.match(/^event: (.+)$/m)
+          const dataLine = frame.match(/^data: (.+)$/m)
+          if (!eventLine || !dataLine) continue
+
+          const eventType = eventLine[1].trim()
+          let payload
+          try { payload = JSON.parse(dataLine[1]) } catch (_) { continue }
+
+          // Mirror the analyze-stream behavior: feed the visualizer.
+          setSwarmEvents(prev => [...prev, { type: eventType, ...payload }])
+
+          if (eventType === 'pipeline_complete' && payload.data) {
+            setResults(prev => ({
+              ...prev,
+              verified_report: payload.data.verified_report,
+              initial_draft: payload.data.initial_draft || prev?.initial_draft,
+              urgency_flag: payload.data.urgency_flag,
+              recommended_dept: payload.data.recommended_dept,
+              critic_interventions: payload.data.critic_interventions,
+              diagnosis_match: payload.data.diagnosis_match,
+            }))
+            setDiagnosisMatch(payload.data.diagnosis_match)
+            setIsRevealed(true)
+            completed = true
+          }
+
+          if (eventType === 'pipeline_error') {
+            setRevealError(payload.error || 'Reveal failed.')
+          }
+        }
+      }
+
+      if (!completed && !revealError) {
+        setRevealError('Stream ended before reveal completed. Please retry.')
       }
     } catch (err) {
       console.error('Reveal failed:', err)
       if (err.name === 'AbortError') {
-        setRevealError('Verification timed out after 120s. The AI swarm is overloaded — please try again in a moment.')
+        setRevealError('Verification timed out after 5 minutes. The AI swarm is overloaded — please try again in a moment.')
       } else {
         setRevealError(err.message || 'Network error during reveal.')
       }
@@ -436,7 +473,7 @@ export default function Dashboard() {
       clearTimeout(timeoutId)
       setIsRevealing(false)
     }
-  }, [results, residentInput, imageHashCache, file])
+  }, [results, residentInput, imageHashCache, file, revealError])
 
   // Keyboard shortcuts (defined after handleReveal so it can be referenced)
   useEffect(() => {
