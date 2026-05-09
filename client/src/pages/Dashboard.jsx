@@ -38,6 +38,8 @@ export default function Dashboard() {
   const [hint, setHint] = useState(null)
   const [isHintLoading, setIsHintLoading] = useState(false)
   const [diagnosisMatch, setDiagnosisMatch] = useState(null)
+  const [socraticHintCache, setSocraticHintCache] = useState(null)   // extracted from SSE pipeline_complete
+  const [imageHashCache, setImageHashCache] = useState(null)          // extracted from SSE pipeline_complete
 
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -194,6 +196,8 @@ export default function Dashboard() {
     setIsRevealed(false)
     setHint(null)
     setDiagnosisMatch(null)
+    setSocraticHintCache(null)
+    setImageHashCache(null)
     setSwarmEvents([])
     setStreamLatency(null)
 
@@ -249,6 +253,13 @@ export default function Dashboard() {
               const resultData = { ...payload.data, processing_latency: payload.processing_latency }
               setResults(resultData)
               setStreamLatency(payload.processing_latency)
+              // Extract edu-mode fields from SSE payload for zero-latency hint access
+              if (payload.data?.socratic_hint) {
+                setSocraticHintCache(payload.data.socratic_hint)
+              }
+              if (payload.data?.image_hash) {
+                setImageHashCache(payload.data.image_hash)
+              }
               if (resultData.partial) {
                 setError('One or more agents returned a degraded response. Partial analysis shown.')
               }
@@ -283,6 +294,13 @@ export default function Dashboard() {
             const resultData = { ...payload.data, processing_latency: payload.processing_latency }
             setResults(resultData)
             setStreamLatency(payload.processing_latency)
+            // Extract edu-mode fields from SSE payload for zero-latency hint access
+            if (payload.data?.socratic_hint) {
+              setSocraticHintCache(payload.data.socratic_hint)
+            }
+            if (payload.data?.image_hash) {
+              setImageHashCache(payload.data.image_hash)
+            }
             if (resultData.partial) {
               setError('One or more agents returned a degraded response. Partial analysis shown.')
             }
@@ -327,39 +345,30 @@ export default function Dashboard() {
     }
   }, [])
 
-  // ─── Education Mode: Request Hint from API ───
-  const requestHint = useCallback(async () => {
-    if (!results?._imageHash) return
+  // ─── Education Mode: Request Hint (zero-latency, from SSE cache) ───
+  const requestHint = useCallback(() => {
     setIsHintLoading(true)
-    try {
-      const resp = await fetch(`${API_BASE}/api/analyze-scan/hint`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageHash: results._imageHash }),
-      })
-      const json = await resp.json()
-      if (json.status === 'success') {
-        setHint(json.data.hint_question)
+    // Small delay so the UI shows "Computing..." briefly for UX
+    setTimeout(() => {
+      if (socraticHintCache) {
+        setHint(socraticHintCache)
       } else {
         setHint('Critic Node Nudge: Focus your attention on structural asymmetries in the medial zones.')
       }
-    } catch (err) {
-      console.error('Hint request failed:', err)
-      setHint('Critic Node Nudge: Focus your attention on structural asymmetries in the medial zones.')
-    } finally {
       setIsHintLoading(false)
-    }
-  }, [results])
+    }, 600)
+  }, [socraticHintCache])
 
   // ─── Education Mode: Reveal Analysis from API ───
   const handleReveal = useCallback(async () => {
-    if (!results?._imageHash || !residentInput.trim()) return
+    const hash = results?._imageHash || imageHashCache
+    if (!hash || !residentInput.trim()) return
     try {
       const resp = await fetch(`${API_BASE}/api/analyze-scan/reveal`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          imageHash: results._imageHash,
+          imageHash: hash,
           residentAssessment: residentInput,
         }),
       })
@@ -376,7 +385,7 @@ export default function Dashboard() {
     } catch (err) {
       console.error('Reveal failed:', err)
     }
-  }, [results, residentInput])
+  }, [results, residentInput, imageHashCache])
 
   // Derive a loading text from the latest swarm event
   const loadingText = (() => {
@@ -416,8 +425,8 @@ export default function Dashboard() {
                 onClick={() => setEngineMode('clinical')}
                 title="Full adversarial consensus loop — up to 3 agent iterations"
                 className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-inter font-semibold tracking-widest uppercase transition-all duration-300 ${engineMode === 'clinical'
-                    ? 'bg-[#00D9FF]/10 text-[#00D9FF] border border-[#00D9FF]/30 shadow-[0_0_15px_rgba(0,217,255,0.1)]'
-                    : 'text-slate-500 hover:text-white border border-transparent'
+                  ? 'bg-[#00D9FF]/10 text-[#00D9FF] border border-[#00D9FF]/30 shadow-[0_0_15px_rgba(0,217,255,0.1)]'
+                  : 'text-slate-500 hover:text-white border border-transparent'
                   }`}
               >
                 <div className={`w-1.5 h-1.5 rounded-full ${engineMode === 'clinical' ? 'bg-[#00D9FF] shadow-[0_0_8px_rgba(0,217,255,1)]' : 'bg-slate-700'}`} />
@@ -427,8 +436,8 @@ export default function Dashboard() {
                 onClick={() => setEngineMode('demo')}
                 title="Single-pass analysis — fast for stage demonstrations"
                 className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-inter font-semibold tracking-widest uppercase transition-all duration-300 ${engineMode === 'demo'
-                    ? 'bg-indigo-900/20 text-indigo-400 border border-indigo-500/30'
-                    : 'text-slate-500 hover:text-white border border-transparent'
+                  ? 'bg-indigo-900/20 text-indigo-400 border border-indigo-500/30'
+                  : 'text-slate-500 hover:text-white border border-transparent'
                   }`}
               >
                 <HUDIcons.GraduationCap /> Fast Demo
@@ -437,8 +446,8 @@ export default function Dashboard() {
                 onClick={() => setEngineMode('edu')}
                 title="Socratic learning mode — hint-based discovery for residents"
                 className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-inter font-semibold tracking-widest uppercase transition-all duration-300 ${engineMode === 'edu'
-                    ? 'bg-indigo-900/20 text-indigo-400 border border-indigo-500/30 shadow-[0_0_15px_rgba(99,102,241,0.2)]'
-                    : 'text-slate-500 hover:text-white border border-transparent'
+                  ? 'bg-indigo-900/20 text-indigo-400 border border-indigo-500/30 shadow-[0_0_15px_rgba(99,102,241,0.2)]'
+                  : 'text-slate-500 hover:text-white border border-transparent'
                   }`}
               >
                 <HUDIcons.GraduationCap /> Education
@@ -446,8 +455,8 @@ export default function Dashboard() {
               <button
                 onClick={() => setEngineMode('batch')}
                 className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-inter font-semibold tracking-widest uppercase transition-all duration-300 ${engineMode === 'batch'
-                    ? 'bg-violet-900/20 text-violet-400 border border-violet-500/30'
-                    : 'text-slate-500 hover:text-white border border-transparent'
+                  ? 'bg-violet-900/20 text-violet-400 border border-violet-500/30'
+                  : 'text-slate-500 hover:text-white border border-transparent'
                   }`}
               >
                 <HUDIcons.Activity /> Batch

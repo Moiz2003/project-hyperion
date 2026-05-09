@@ -10,10 +10,17 @@ export default function SwarmStatus() {
   const [mongo, setMongo] = useState(null)
 
   const poll = () => {
-    fetch(`${API_BASE}/health/detailed`)
+    fetch(`${API_BASE}/health`)
       .then(r => r.json())
       .then(d => {
-        setAgents(d.agents || null)
+        // Map monolithic backend response: "ok" → "up", "unreachable" → "unreachable"
+        const mapped = {}
+        if (d.agents) {
+          for (const [name, status] of Object.entries(d.agents)) {
+            mapped[name] = status === 'ok' ? 'up' : status
+          }
+        }
+        setAgents(mapped)
         setMongo(d.mongo || null)
       })
       .catch(() => {
@@ -36,7 +43,7 @@ export default function SwarmStatus() {
   const overallGlow = allUp
     ? 'shadow-[0_0_8px_rgba(52,211,153,0.8)]'
     : anyDown ? 'shadow-[0_0_8px_rgba(239,68,68,0.8)]'
-    : 'shadow-[0_0_8px_rgba(245,158,11,0.8)]'
+      : 'shadow-[0_0_8px_rgba(245,158,11,0.8)]'
 
   return (
     <div className="group relative flex items-center gap-2 cursor-default select-none">

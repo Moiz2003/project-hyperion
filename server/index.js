@@ -1,28 +1,29 @@
 'use strict'
 
 const path = require('path')
+const http = require('http')
 require('dotenv').config({ path: path.resolve(__dirname, '.env') })
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') })
 
-const express  = require('express')
-const helmet   = require('helmet')
-const cors     = require('cors')
-const Stripe   = require('stripe')
-const multer   = require('multer')
+const express = require('express')
+const helmet = require('helmet')
+const cors = require('cors')
+const Stripe = require('stripe')
+const multer = require('multer')
 const mongoose = require('mongoose')
 const { OpenAI } = require('openai')
 
 // ── Config ────────────────────────────────────────────────────────────────────
 const CONFIG = {
-  port:           process.env.PORT           || 3000,
-  mongoUri:       process.env.MONGO_URI      || '',
-  maxFileSizeMB:  20,
-  drafterUrl:     process.env.LOCAL_DRAFTER_URL || 'http://localhost:8000/v1',
-  visionUrl:      process.env.LOCAL_VISION_URL  || 'http://localhost:8001/v1',
-  criticUrl:      process.env.LOCAL_CRITIC_URL  || 'http://localhost:8002/v1',
-  drafterModel:   process.env.DRAFTER_MODEL  || 'TheBloke/Meditron-70B-AWQ',
-  visionModel:    process.env.VISION_MODEL   || 'OpenGVLab/InternVL-Chat-V1-5-AWQ',
-  criticModel:    process.env.CRITIC_MODEL   || 'casperhansen/llama-3-70b-instruct-awq',
+  port: process.env.PORT || 3000,
+  mongoUri: process.env.MONGO_URI || '',
+  maxFileSizeMB: 20,
+  drafterUrl: process.env.LOCAL_DRAFTER_URL || 'http://localhost:8000/v1',
+  visionUrl: process.env.LOCAL_VISION_URL || 'http://localhost:8001/v1',
+  criticUrl: process.env.LOCAL_CRITIC_URL || 'http://localhost:8002/v1',
+  drafterModel: process.env.DRAFTER_MODEL || 'TheBloke/Meditron-70B-AWQ',
+  visionModel: process.env.VISION_MODEL || 'OpenGVLab/InternVL-Chat-V1-5-AWQ',
+  criticModel: process.env.CRITIC_MODEL || 'casperhansen/llama-3-70b-instruct-awq',
 }
 
 // ── MongoDB ───────────────────────────────────────────────────────────────────
@@ -47,14 +48,14 @@ const connectMongo = async () => {
 }
 
 const scanResultSchema = new mongoose.Schema({
-  imageBase64:        { type: String, maxLength: 5 * 1024 * 1024 },
-  rawFindings:        String,
-  verifiedReport:     String,
-  urgencyFlag:        String,
-  recommendedDept:    String,
-  criticInterventions:{ type: Number, default: 1 },
-  processingLatency:  String,
-  createdAt:          { type: Date, default: Date.now },
+  imageBase64: { type: String, maxLength: 5 * 1024 * 1024 },
+  rawFindings: String,
+  verifiedReport: String,
+  urgencyFlag: String,
+  recommendedDept: String,
+  criticInterventions: { type: Number, default: 1 },
+  processingLatency: String,
+  createdAt: { type: Date, default: Date.now },
 })
 
 const ScanResult = mongoose.model('ScanResult', scanResultSchema)
@@ -62,8 +63,8 @@ const ScanResult = mongoose.model('ScanResult', scanResultSchema)
 // ── vLLM swarm clients (OpenAI-compatible) ────────────────────────────────────
 // 'local' satisfies the SDK's required-key check without sending to any external service.
 const drafterClient = new OpenAI({ baseURL: CONFIG.drafterUrl, apiKey: 'local' })
-const visionClient  = new OpenAI({ baseURL: CONFIG.visionUrl,  apiKey: 'local' })
-const criticClient  = new OpenAI({ baseURL: CONFIG.criticUrl,  apiKey: 'local' })
+const visionClient = new OpenAI({ baseURL: CONFIG.visionUrl, apiKey: 'local' })
+const criticClient = new OpenAI({ baseURL: CONFIG.criticUrl, apiKey: 'local' })
 
 // ── Stripe ────────────────────────────────────────────────────────────────────
 const stripeKey = process.env.STRIPE_SECRET_KEY
@@ -204,9 +205,9 @@ const runCriticAgent = async (draftAssessment, rawFindings) => {
   if (jsonMatch) {
     try {
       const meta = JSON.parse(jsonMatch[1].trim())
-      urgencyFlag          = meta.urgency_flag      || urgencyFlag
-      recommendedDept      = meta.recommended_dept  || recommendedDept
-      criticInterventions  = typeof meta.interventions_made === 'number'
+      urgencyFlag = meta.urgency_flag || urgencyFlag
+      recommendedDept = meta.recommended_dept || recommendedDept
+      criticInterventions = typeof meta.interventions_made === 'number'
         ? meta.interventions_made
         : criticInterventions
     } catch { /* malformed JSON — use defaults */ }
@@ -221,14 +222,26 @@ const runCriticAgent = async (draftAssessment, rawFindings) => {
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 
+/**
+ * Probe a vLLM endpoint via raw HTTP with a 2-second timeout.
+ * Returns 'ok' if the endpoint responds, 'unreachable' otherwise.
+ */
+function probeAgent(url) {
+  return new Promise((resolve) => {
+    const req = http.get(url, { timeout: 2000 }, (res) => {
+      res.resume()
+      resolve('ok')
+    })
+    req.on('timeout', () => { req.destroy(); resolve('unreachable') })
+    req.on('error', () => resolve('unreachable'))
+  })
+}
+
 app.get('/health', async (_req, res) => {
-  const probe = async (client) => {
-    try { await client.models.list(); return 'ok' } catch { return 'unreachable' }
-  }
   const [drafter, vision, critic] = await Promise.all([
-    probe(drafterClient),
-    probe(visionClient),
-    probe(criticClient),
+    probeAgent('http://localhost:8000/v1/models'),
+    probeAgent('http://localhost:8001/v1/models'),
+    probeAgent('http://localhost:8002/v1/models'),
   ])
   const agents = { drafter, vision, critic }
   const healthy = Object.values(agents).every(s => s === 'ok')
@@ -283,17 +296,17 @@ app.post('/api/analyze-scan', upload.single('xray_image'), async (req, res) => {
     const processingLatency = `${((Date.now() - t0) / 1000).toFixed(1)}s`
 
     const payload = {
-      raw_findings:         rawFindings,
-      verified_report:      verifiedReport,
-      urgency_flag:         urgencyFlag,
-      recommended_dept:     recommendedDept,
+      raw_findings: rawFindings,
+      verified_report: verifiedReport,
+      urgency_flag: urgencyFlag,
+      recommended_dept: recommendedDept,
       critic_interventions: criticInterventions,
     }
 
     // Persist to MongoDB (non-blocking — don't fail the request if it errors)
     if (mongoConnected) {
       ScanResult.create({
-        imageBase64:        req.file.buffer.toString('base64'),
+        imageBase64: req.file.buffer.toString('base64'),
         rawFindings,
         verifiedReport,
         urgencyFlag,
@@ -304,14 +317,14 @@ app.post('/api/analyze-scan', upload.single('xray_image'), async (req, res) => {
     }
 
     return res.status(200).json({
-      status:             'success',
-      data:               payload,
+      status: 'success',
+      data: payload,
       processing_latency: processingLatency,
     })
   } catch (err) {
     console.error('Swarm pipeline error:', err)
     return res.status(500).json({
-      status:  'error',
+      status: 'error',
       message: err.message || 'Swarm inference failed.',
     })
   }
@@ -338,7 +351,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
         quantity: 1,
       }],
       success_url: `${origin}/pricing?checkout=success`,
-      cancel_url:  `${origin}/pricing?checkout=cancel`,
+      cancel_url: `${origin}/pricing?checkout=cancel`,
       metadata: { plan: 'clinician-pro' },
     })
     return res.status(200).json({ url: session.url })
