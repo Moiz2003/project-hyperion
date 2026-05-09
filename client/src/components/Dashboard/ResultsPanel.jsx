@@ -325,28 +325,72 @@ export default function ResultsPanel({
 
                     {/* Score Breakdown */}
                     <div className="space-y-3 flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-slate-400 font-mono">Keywords Matched</span>
-                        <span className="text-sm font-bold text-emerald-400">{diagnosisMatch.matched || 0}</span>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-xs text-slate-400 font-mono shrink-0">Keywords Matched</span>
+                        <span className="text-sm font-bold text-emerald-400">
+                          {Array.isArray(diagnosisMatch.matched) ? diagnosisMatch.matched.length : (diagnosisMatch.matched || 0)}
+                        </span>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-slate-400 font-mono">Keywords Missed</span>
-                        <span className="text-sm font-bold text-red-400">{diagnosisMatch.missed || 0}</span>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-xs text-slate-400 font-mono shrink-0">Keywords Missed</span>
+                        <span className="text-sm font-bold text-red-400">
+                          {Array.isArray(diagnosisMatch.missed) ? diagnosisMatch.missed.length : (diagnosisMatch.missed || 0)}
+                        </span>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-slate-400 font-mono">Extra Keywords</span>
-                        <span className="text-sm font-bold text-amber-400">{diagnosisMatch.extra || 0}</span>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-xs text-slate-400 font-mono shrink-0">Extra Keywords</span>
+                        <span className="text-sm font-bold text-amber-400">
+                          {Array.isArray(diagnosisMatch.extra) ? diagnosisMatch.extra.length : (diagnosisMatch.extra || 0)}
+                        </span>
                       </div>
-                      <div className="pt-2 border-t border-indigo-500/20 flex items-center justify-between">
-                        <span className="text-xs text-slate-400 font-mono">Total AI Keywords</span>
+                      <div className="pt-2 border-t border-indigo-500/20 flex items-center justify-between gap-3">
+                        <span className="text-xs text-slate-400 font-mono shrink-0">Total AI Keywords</span>
                         <span className="text-sm font-bold text-cyan-400">{diagnosisMatch.total_ai_keywords || 0}</span>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-slate-400 font-mono">Your Keywords</span>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-xs text-slate-400 font-mono shrink-0">Your Keywords</span>
                         <span className="text-sm font-bold text-cyan-400">{diagnosisMatch.total_resident_keywords || 0}</span>
                       </div>
                     </div>
                   </div>
+
+                  {/* Keyword chips — shown below counts so each list is readable */}
+                  {(Array.isArray(diagnosisMatch.matched) && diagnosisMatch.matched.length > 0) ||
+                   (Array.isArray(diagnosisMatch.missed) && diagnosisMatch.missed.length > 0) ||
+                   (Array.isArray(diagnosisMatch.extra) && diagnosisMatch.extra.length > 0) ? (
+                    <div className="mt-6 space-y-3">
+                      {Array.isArray(diagnosisMatch.matched) && diagnosisMatch.matched.length > 0 && (
+                        <div>
+                          <div className="text-[10px] font-mono uppercase tracking-widest text-emerald-500/80 mb-2">Matched</div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {diagnosisMatch.matched.map((k, i) => (
+                              <span key={`m-${i}`} className="px-2.5 py-1 rounded-md bg-emerald-950/30 border border-emerald-500/30 text-emerald-300 text-[11px] font-mono">{k}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {Array.isArray(diagnosisMatch.missed) && diagnosisMatch.missed.length > 0 && (
+                        <div>
+                          <div className="text-[10px] font-mono uppercase tracking-widest text-red-500/80 mb-2">Missed by you</div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {diagnosisMatch.missed.map((k, i) => (
+                              <span key={`x-${i}`} className="px-2.5 py-1 rounded-md bg-red-950/30 border border-red-500/30 text-red-300 text-[11px] font-mono">{k}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {Array.isArray(diagnosisMatch.extra) && diagnosisMatch.extra.length > 0 && (
+                        <div>
+                          <div className="text-[10px] font-mono uppercase tracking-widest text-amber-500/80 mb-2">Extra (not in AI report)</div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {diagnosisMatch.extra.map((k, i) => (
+                              <span key={`e-${i}`} className="px-2.5 py-1 rounded-md bg-amber-950/30 border border-amber-500/30 text-amber-300 text-[11px] font-mono">{k}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
                 </motion.div>
               )}
 
