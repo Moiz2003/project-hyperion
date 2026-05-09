@@ -366,6 +366,13 @@ export default function Dashboard() {
     }
     setIsRevealing(true)
     setRevealError(null)
+
+    // Client-side timeout — backend pipeline can hang on slow agents and Render
+    // may drop the connection silently. 120s gives a comfortable margin over
+    // the typical ~30-60s single-pass clinical run.
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 120_000)
+
     try {
       // Prefer multipart with the original file so the backend doesn't depend
       // on its in-memory edu cache (survives Render dyno restarts and
@@ -380,6 +387,7 @@ export default function Dashboard() {
         resp = await fetch(`${API_BASE}/api/analyze-scan/reveal`, {
           method: 'POST',
           body: fd,
+          signal: controller.signal,
         })
       } else {
         resp = await fetch(`${API_BASE}/api/analyze-scan/reveal`, {
@@ -389,6 +397,7 @@ export default function Dashboard() {
             image_hash: hash,
             resident_assessment: residentInput,
           }),
+          signal: controller.signal,
         })
       }
 
@@ -418,8 +427,13 @@ export default function Dashboard() {
       }
     } catch (err) {
       console.error('Reveal failed:', err)
-      setRevealError(err.message || 'Network error during reveal.')
+      if (err.name === 'AbortError') {
+        setRevealError('Verification timed out after 120s. The AI swarm is overloaded — please try again in a moment.')
+      } else {
+        setRevealError(err.message || 'Network error during reveal.')
+      }
     } finally {
+      clearTimeout(timeoutId)
       setIsRevealing(false)
     }
   }, [results, residentInput, imageHashCache, file])

@@ -182,27 +182,34 @@ async function analyzeScan(req, res, next) {
   })
 }
 
-async function runPipeline(imageBuffer, imageHash, requestId, log, demoMode, emit = () => { }, mode = 'clinical') {
+async function runPipeline(imageBuffer, imageHash, requestId, log, demoMode, emit = () => { }, mode = 'clinical', opts = {}) {
   const maxIterations = demoMode ? DEMO_MAX_ITERATIONS : PROD_MAX_ITERATIONS
   let partial = false
   const agentTimings = {}
 
-  // Stage 1: Vision
-  log.info('Stage 1: Vision agent')
-  emit('agent_start', { agent: 'vision', label: 'Vision Agent', detail: 'Scanning image geometry...' })
+  // Stage 1: Vision (skip if caller supplied pre-computed findings, e.g. edu reveal)
   let rawFindings
-  try {
-    const t = Date.now()
-    rawFindings = await runVisionAgent(imageBuffer, requestId)
-    agentTimings.vision = `${((Date.now() - t) / 1000).toFixed(2)}s`
-    if (!isViable(rawFindings)) throw new Error(`Vision returned degenerate output (${rawFindings?.length ?? 0} chars)`)
-    emit('agent_done', { agent: 'vision', elapsed: agentTimings.vision, chars: rawFindings.length, preview: rawFindings.slice(0, 200) })
-  } catch (err) {
-    log.warn({ err: err.message }, 'Vision agent failed — using fallback')
-    rawFindings = 'Vision analysis unavailable. Manual review required.'
-    agentTimings.vision = 'failed'
-    partial = true
-    emit('agent_failed', { agent: 'vision', error: err.message })
+  if (isViable(opts.precomputedRawFindings)) {
+    rawFindings = opts.precomputedRawFindings
+    agentTimings.vision = 'cached'
+    log.info('Stage 1: Vision skipped — using cached rawFindings')
+    emit('agent_done', { agent: 'vision', elapsed: agentTimings.vision, chars: rawFindings.length, cached: true })
+  } else {
+    log.info('Stage 1: Vision agent')
+    emit('agent_start', { agent: 'vision', label: 'Vision Agent', detail: 'Scanning image geometry...' })
+    try {
+      const t = Date.now()
+      rawFindings = await runVisionAgent(imageBuffer, requestId)
+      agentTimings.vision = `${((Date.now() - t) / 1000).toFixed(2)}s`
+      if (!isViable(rawFindings)) throw new Error(`Vision returned degenerate output (${rawFindings?.length ?? 0} chars)`)
+      emit('agent_done', { agent: 'vision', elapsed: agentTimings.vision, chars: rawFindings.length, preview: rawFindings.slice(0, 200) })
+    } catch (err) {
+      log.warn({ err: err.message }, 'Vision agent failed — using fallback')
+      rawFindings = 'Vision analysis unavailable. Manual review required.'
+      agentTimings.vision = 'failed'
+      partial = true
+      emit('agent_failed', { agent: 'vision', error: err.message })
+    }
   }
 
   // Edu short-circuit: skip the adversarial loop, run only the Socratic critic
@@ -353,20 +360,27 @@ async function revealAnalysis(req, res, next) {
   const residentAssessment = typeof req.body.resident_assessment === 'string'
     ? req.body.resident_assessment.trim()
     : ''
-  const demoMode = isDemoMode(req)
+  // Reveal always uses single-pass (demoMode) — the user is matching their
+  // assessment against the AI consensus, not waiting for 3 iterations of
+  // adversarial refinement. This keeps reveal under ~60s on slow agents.
+  const demoMode = true
 
   // Prefer the uploaded image (resilient to dyno restarts and multi-instance cache misses).
   // Fall back to the in-memory edu session cache keyed by image_hash.
   let imageBuffer
   let imageHash
   let cachedSocraticHint = null
+  let cachedRawFindings = null
 
   if (req.file && req.file.buffer) {
     imageBuffer = req.file.buffer
     imageHash = crypto.createHash('sha256').update(imageBuffer).digest('hex')
     const cached = eduSessionCache.get(imageHash)
-    if (cached) cachedSocraticHint = cached.socraticHint
-    log.info({ imageHash, source: 'upload' }, 'Reveal — using uploaded image')
+    if (cached) {
+      cachedSocraticHint = cached.socraticHint
+      cachedRawFindings = cached.rawFindings
+    }
+    log.info({ imageHash, source: 'upload', cacheHit: !!cached }, 'Reveal — using uploaded image')
   } else {
     imageHash = req.body.image_hash
     const cached = eduSessionCache.get(imageHash)
@@ -380,15 +394,18 @@ async function revealAnalysis(req, res, next) {
     }
     imageBuffer = cached.imageBuffer
     cachedSocraticHint = cached.socraticHint
+    cachedRawFindings = cached.rawFindings
     log.info({ imageHash, source: 'cache' }, 'Reveal — using cached image')
   }
 
-  log.info({ hasAssessment: residentAssessment.length > 0, demoMode }, 'Reveal — running clinical pipeline')
+  log.info({ hasAssessment: residentAssessment.length > 0, demoMode, skipVision: !!cachedRawFindings }, 'Reveal — running clinical pipeline')
 
   let pipelineResult
   try {
     pipelineResult = await Promise.race([
-      runPipeline(imageBuffer, imageHash, requestId, log, demoMode, () => {}, 'clinical'),
+      runPipeline(imageBuffer, imageHash, requestId, log, demoMode, () => {}, 'clinical', {
+        precomputedRawFindings: cachedRawFindings,
+      }),
       new Promise((_, reject) =>
         setTimeout(
           () => reject(Object.assign(new Error('Reveal pipeline timeout'), { status: 504 })),
