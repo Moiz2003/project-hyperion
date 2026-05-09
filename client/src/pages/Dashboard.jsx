@@ -211,7 +211,10 @@ export default function Dashboard() {
     setSwarmEvents([])
     setStreamLatency(null)
 
-    const isDemoMode = engineMode === 'demo'
+    // Speed tier maps to backend demoMode (single-pass) vs full adversarial.
+    // Fast → demoMode=true (1 iteration, ~28s budget), Pro → demoMode=false
+    // (up to 3 iterations, ~290s budget).
+    const isDemoMode = speedMode === 'fast'
     const isEduMode = engineMode === 'edu'
     setStreamMode(isDemoMode ? 'demo' : 'production')
 
@@ -539,28 +542,19 @@ export default function Dashboard() {
               Analytics
             </button>
 
-            {/* Engine Mode Selector */}
+            {/* Engine Mode Selector — three primary tabs. The Demo/Pro speed
+                tier toggle below applies to all three. */}
             <div className="flex items-center gap-1.5 p-1 bg-[#000]/50 border border-slate-800 rounded-md">
               <button
                 onClick={() => setEngineMode('clinical')}
-                title="Full adversarial consensus loop — up to 3 agent iterations"
+                title="Adversarial consensus pipeline. Toggle Demo (Fast) or Pro (Slow + Accurate) below."
                 className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-inter font-semibold tracking-widest uppercase transition-all duration-300 ${engineMode === 'clinical'
                   ? 'bg-[#00D9FF]/10 text-[#00D9FF] border border-[#00D9FF]/30 shadow-[0_0_15px_rgba(0,217,255,0.1)]'
                   : 'text-slate-500 hover:text-white border border-transparent'
                   }`}
               >
                 <div className={`w-1.5 h-1.5 rounded-full ${engineMode === 'clinical' ? 'bg-[#00D9FF] shadow-[0_0_8px_rgba(0,217,255,1)]' : 'bg-slate-700'}`} />
-                Deep Clinical
-              </button>
-              <button
-                onClick={() => setEngineMode('demo')}
-                title="Single-pass analysis — fast for stage demonstrations"
-                className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-inter font-semibold tracking-widest uppercase transition-all duration-300 ${engineMode === 'demo'
-                  ? 'bg-indigo-900/20 text-indigo-400 border border-indigo-500/30'
-                  : 'text-slate-500 hover:text-white border border-transparent'
-                  }`}
-              >
-                <HUDIcons.GraduationCap /> Fast Demo
+                Clinical
               </button>
               <button
                 onClick={() => setEngineMode('edu')}
@@ -591,12 +585,11 @@ export default function Dashboard() {
           onSelectScan={handleSelectScan}
         />
 
-        {/* Speed tier toggle — only visible for edu and batch modes.
-            Mirrors the Gemini Fast/Pro split: Fast is synthesized from
-            cached vision findings (<30s), Pro runs the real adversarial
-            pipeline with a 5-minute budget. */}
-        {(engineMode === 'edu' || engineMode === 'batch') && (
-          <div className="flex items-center justify-end gap-3 -mt-4">
+        {/* Speed tier toggle — applies to all three modes (Clinical /
+            Education / Batch). Mirrors the Gemini Fast/Pro split: Fast
+            synthesizes from vision-stage findings (<30s), Pro runs the
+            real adversarial pipeline with a 5-minute budget. */}
+        <div className="flex items-center justify-end gap-3 -mt-4">
             <span className="text-[10px] font-bold tracking-widest uppercase text-slate-500">Tier</span>
             <div className="flex items-center gap-1 p-1 bg-[#000]/50 border border-slate-800 rounded-md">
               <button
@@ -625,7 +618,6 @@ export default function Dashboard() {
               </button>
             </div>
           </div>
-        )}
 
         {engineMode === 'batch' && (
           <div className="rounded-3xl border border-cyan-500/20 bg-[#0f2341]/20 p-6 backdrop-blur-xl">
