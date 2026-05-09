@@ -40,6 +40,8 @@ export default function Dashboard() {
   const [diagnosisMatch, setDiagnosisMatch] = useState(null)
   const [socraticHintCache, setSocraticHintCache] = useState(null)   // extracted from SSE pipeline_complete
   const [imageHashCache, setImageHashCache] = useState(null)          // extracted from SSE pipeline_complete
+  const [isRevealing, setIsRevealing] = useState(false)
+  const [revealError, setRevealError] = useState(null)
 
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -59,6 +61,8 @@ export default function Dashboard() {
     setDiagnosisMatch(null)
     setSwarmEvents([])
     setStreamLatency(null)
+    setRevealError(null)
+    setIsRevealing(false)
     if (selectedFile.size > 15 * 1024 * 1024) {
       setError('Large file (>15 MB) — the network may drop this payload. Compress or resize before uploading.')
       setFileSizeError(true)
@@ -95,6 +99,8 @@ export default function Dashboard() {
     setDiagnosisMatch(null)
     setSwarmEvents([])
     setStreamLatency(null)
+    setRevealError(null)
+    setIsRevealing(false)
   }
 
   const handleSelectScan = useCallback((scan) => {
@@ -323,18 +329,6 @@ export default function Dashboard() {
     }
   }, [file, engineMode])
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handler = (e) => {
-      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-        if (file && !isLoading && !fileSizeError && engineMode !== 'batch') analyzeScan()
-      }
-      if (e.key === 'Escape' && (file || results)) clearSelection()
-    }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [file, isLoading, results, engineMode, fileSizeError, analyzeScan])
-
   // Abort on unmount
   useEffect(() => {
     return () => {
@@ -365,7 +359,13 @@ export default function Dashboard() {
   // ─── Education Mode: Reveal Analysis from API ───
   const handleReveal = useCallback(async () => {
     const hash = results?._imageHash || imageHashCache
-    if (!hash || !residentInput.trim()) return
+    if (!residentInput.trim()) return
+    if (!hash) {
+      setRevealError('Image hash unavailable — please re-upload the scan in Education mode and wait for analysis to finish.')
+      return
+    }
+    setIsRevealing(true)
+    setRevealError(null)
     try {
       const resp = await fetch(`${API_BASE}/api/analyze-scan/reveal`, {
         method: 'POST',
@@ -375,20 +375,55 @@ export default function Dashboard() {
           resident_assessment: residentInput,
         }),
       })
-      const json = await resp.json()
-      if (json.status === 'success') {
+
+      let json = null
+      try { json = await resp.json() } catch (_) { /* non-JSON response */ }
+
+      if (!resp.ok && json?.status !== 'partial') {
+        const msg = json?.message || `Reveal failed (HTTP ${resp.status})`
+        setRevealError(msg)
+        return
+      }
+
+      if (json && (json.status === 'success' || json.status === 'partial') && json.data) {
         setResults(prev => ({
           ...prev,
           verified_report: json.data.verified_report,
+          initial_draft: json.data.initial_draft || prev?.initial_draft,
+          urgency_flag: json.data.urgency_flag,
+          recommended_dept: json.data.recommended_dept,
+          critic_interventions: json.data.critic_interventions,
           diagnosis_match: json.data.diagnosis_match,
         }))
         setDiagnosisMatch(json.data.diagnosis_match)
         setIsRevealed(true)
+      } else {
+        setRevealError(json?.message || 'Reveal returned an unexpected response.')
       }
     } catch (err) {
       console.error('Reveal failed:', err)
+      setRevealError(err.message || 'Network error during reveal.')
+    } finally {
+      setIsRevealing(false)
     }
   }, [results, residentInput, imageHashCache])
+
+  // Keyboard shortcuts (defined after handleReveal so it can be referenced)
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        // In edu mode after analysis, Ctrl+Enter reveals instead of re-analyzing
+        if (engineMode === 'edu' && results && !isRevealed && residentInput.trim() && !isRevealing) {
+          handleReveal()
+          return
+        }
+        if (file && !isLoading && !fileSizeError && engineMode !== 'batch') analyzeScan()
+      }
+      if (e.key === 'Escape' && (file || results)) clearSelection()
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [file, isLoading, results, engineMode, fileSizeError, analyzeScan, isRevealed, residentInput, isRevealing, handleReveal])
 
   // Derive a loading text from the latest swarm event
   const loadingText = (() => {
@@ -548,6 +583,8 @@ export default function Dashboard() {
                 onReveal={handleReveal}
                 onDownloadPDF={handleDownloadPDF}
                 diagnosisMatch={diagnosisMatch}
+                isRevealing={isRevealing}
+                revealError={revealError}
               />
             </div>
           </ErrorBoundary>

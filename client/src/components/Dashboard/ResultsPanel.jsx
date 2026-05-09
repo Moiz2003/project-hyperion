@@ -8,6 +8,7 @@ export default function ResultsPanel({
   results, isLoading, loadingText, isRevealed, engineMode,
   residentInput, onResidentInput, hint, isHintLoading,
   onRequestHint, onReveal, onDownloadPDF, diagnosisMatch,
+  isRevealing, revealError,
 }) {
   const [showComparison, setShowComparison] = useState(false)
 
@@ -102,20 +103,29 @@ export default function ResultsPanel({
                     </motion.div>
                   )}
 
+                  {revealError && (
+                    <div className="mb-6 p-4 rounded-xl bg-red-950/30 border border-red-500/30 text-red-300 text-sm font-mono">
+                      {revealError}
+                    </div>
+                  )}
+
                   <div className="flex items-center gap-4 mt-auto">
                     <button
                       onClick={onRequestHint}
-                      disabled={isHintLoading || !!hint}
+                      disabled={isHintLoading || !!hint || isRevealing}
                       className="px-6 py-4 rounded-lg border border-slate-700 bg-slate-900/40 text-slate-300 font-inter font-bold text-[10px] tracking-widest uppercase hover:bg-slate-800 transition-all disabled:opacity-50"
                     >
                       {isHintLoading ? 'Computing...' : 'Request Hint'}
                     </button>
                     <button
                       onClick={onReveal}
-                      disabled={!residentInput.trim()}
-                      className="flex-1 py-4 rounded-lg bg-gradient-to-r from-cyan-400 to-blue-500 text-[#0a1628] font-inter font-bold text-[10px] tracking-widest uppercase hover:opacity-90 hover:shadow-[0_0_30px_rgba(0,217,255,0.2)] transition-all disabled:opacity-50 disabled:bg-slate-800 disabled:text-slate-500 disabled:hover:shadow-none"
+                      disabled={!residentInput.trim() || isRevealing}
+                      className="flex-1 py-4 rounded-lg bg-gradient-to-r from-cyan-400 to-blue-500 text-[#0a1628] font-inter font-bold text-[10px] tracking-widest uppercase hover:opacity-90 hover:shadow-[0_0_30px_rgba(0,217,255,0.2)] transition-all disabled:opacity-50 disabled:bg-slate-800 disabled:text-slate-500 disabled:hover:shadow-none flex items-center justify-center gap-2"
                     >
-                      Verify Findings
+                      {isRevealing && (
+                        <span className="inline-block w-3 h-3 border-2 border-[#0a1628]/40 border-t-[#0a1628] rounded-full animate-spin" />
+                      )}
+                      {isRevealing ? 'Verifying — Running Full Swarm…' : 'Verify Findings'}
                     </button>
                   </div>
 
@@ -286,6 +296,12 @@ export default function ResultsPanel({
                     {/* Score Gauge */}
                     <div className="relative w-24 h-24 shrink-0">
                       <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 100 100">
+                        <defs>
+                          <linearGradient id="eduGaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stopColor="#818cf8" />
+                            <stop offset="100%" stopColor="#6366f1" />
+                          </linearGradient>
+                        </defs>
                         <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(99,102,241,0.15)" strokeWidth="8" />
                         <motion.circle
                           cx="50" cy="50" r="42"
@@ -305,12 +321,6 @@ export default function ResultsPanel({
                           {diagnosisMatch.score || 0}%
                         </span>
                       </div>
-                      <defs>
-                        <linearGradient id="eduGaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                          <stop offset="0%" stopColor="#818cf8" />
-                          <stop offset="100%" stopColor="#6366f1" />
-                        </linearGradient>
-                      </defs>
                     </div>
 
                     {/* Score Breakdown */}
