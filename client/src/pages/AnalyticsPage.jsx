@@ -139,14 +139,14 @@ export default function AnalyticsPage() {
     <div className="min-h-screen bg-[#020617] text-slate-200 font-inter p-6 selection:bg-cyan-500/30">
       <div className="max-w-5xl mx-auto space-y-8">
 
-        <header className="flex items-center justify-between pb-6 border-b border-slate-800/60">
+        <header className="flex items-center justify-between pb-6 border-b border-blue-500/20">
           <div className="cursor-pointer" onClick={() => navigate('/')}>
             <HyperionLogo horizontal className="h-14 w-auto" />
           </div>
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate('/dashboard')}
-              className="text-xs font-bold tracking-widest uppercase text-slate-500 hover:text-cyan-400 transition-colors border border-slate-800 px-4 py-2 rounded-full hover:border-cyan-500/40"
+              className="text-xs font-bold tracking-widest uppercase text-slate-400 hover:text-cyan-400 transition-colors border border-slate-700 px-4 py-2 rounded-full hover:border-cyan-400/50"
             >
               ← Dashboard
             </button>

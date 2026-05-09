@@ -17,7 +17,7 @@ const CloseIcon = () => (
 );
 
 const ScanIcon = () => (
-    <svg className="w-4 h-4 text-indigo-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <svg className="w-4 h-4 text-cyan-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
         <polyline points="13 2 13 9 20 9" />
     </svg>
@@ -187,7 +187,7 @@ export default function ScanHistorySidebar({ onSelectScan, isOpen, onToggle }) {
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: idx * 0.03 }}
                                     onClick={() => onSelectScan(scan)}
-                                    className="w-full text-left p-3 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-indigo-500/50 hover:bg-indigo-950/20 transition-all group cursor-pointer"
+                                    className="w-full text-left p-3 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-cyan-400/50 hover:bg-cyan-950/20 transition-all group cursor-pointer"
                                 >
                                     <div className="flex items-start gap-3">
                                         {/* Thumbnail */}

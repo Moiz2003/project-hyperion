@@ -28,7 +28,7 @@ const DEMO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="60
   <text x="740" y="555" text-anchor="end" font-family="monospace" font-size="7" fill="#0f2236">DEMO · NOT FOR CLINICAL USE</text>
 </svg>`
 
-const DEMO_PREVIEW_URL = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(DEMO_SVG)}`
+const DEMO_PREVIEW_URL = '/demo-chest-xray-pa.jpeg'
 
 const RAW_FINDINGS = `Modality & Anatomy: Chest X-ray (PA view, upright), adult patient.
 
@@ -92,7 +92,7 @@ PA chest radiograph demonstrates right upper lobe lobar consolidation with air b
 Your chest X-ray shows a lung infection (pneumonia) in the upper right portion of your lung. You will need antibiotic treatment. Additional blood and urine tests will help identify the exact bacteria causing the infection. Your doctor will use a scoring system to decide whether you need hospital admission or can be treated safely at home.`
 
 export const DEMO_SCAN = {
-  file: { name: 'demo-chest-xray-pa.jpg', size: 1_843_200, type: 'image/jpeg' },
+  file: { name: 'demo-chest-xray-pa.jpeg', size: 1_843_200, type: 'image/jpeg' },
   previewUrl: DEMO_PREVIEW_URL,
   streamMode: 'production',
 

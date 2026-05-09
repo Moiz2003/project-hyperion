@@ -121,7 +121,7 @@ _wait_ready "Vision" /shared-docker/vision.log
 docker exec "$CONTAINER_NAME" \
   tmux send-keys -t "${SESSION}:drafter" \
     "vllm serve $DRAFTER_MODEL \
-      --port 8000 --host 0.0.0.0\
+      --port 8000 --host 0.0.0.0 \
       --quantization awq \
       --gpu-memory-utilization 0.30 \
       --max-model-len 4096 \

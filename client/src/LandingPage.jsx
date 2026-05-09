@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { HyperionLogo } from './Logo';
 import { Footer } from './Footer';
 import { Header } from './Header';
+import { Check, ArrowRight, Shield, Zap, Users, Lock, TrendingUp, Image as ImageIcon } from 'lucide-react';
 
 // Custom SVG Icons
 const CustomIcons = {
@@ -58,7 +59,7 @@ export default function LandingPage({ onNavigate }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-50 font-inter overflow-x-hidden selection:bg-cyan-500/30 relative">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 text-slate-50 font-inter overflow-x-hidden selection:bg-cyan-500/30 relative">
 
       {/* CSS for Glitch Effect */}
       <style>{`
@@ -147,239 +148,264 @@ export default function LandingPage({ onNavigate }) {
 
       <Header onNavigate={onNavigate} />
 
-      {/* 2. The "Living" Hero */}
-      <main
-        className="max-w-7xl mx-auto px-6 pt-12 pb-20 relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center min-h-[85vh]"
-      >
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.2, ease: "easeOut" }}
-          className="flex flex-col"
-        >
-          {/* <div className="mb-6 inline-flex items-center gap-3 text-cyan-400 text-sm font-bold tracking-widest uppercase bg-cyan-950/30 px-4 py-2 rounded-full w-max border border-cyan-900/50">
-            <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_10px_rgba(34,211,238,0.8)]" />
-            Edge-Native Inference
-          </div>
-          </div> */}
-          <h1 className="text-6xl md:text-8xl font-inter font-bold tracking-tighter text-white mb-6 leading-[1.1]">
-            Radiology,<br />
-            Redefined by<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-500">Consensus.</span>
-          </h1>
-
-          <p className="text-xl md:text-2xl text-slate-300 mb-8 max-w-xl leading-relaxed font-medium tracking-wide">
-            Hyperion abandons single-model frailty. Three localized agents extract, draft, and aggressively verify clinical findings in milliseconds—completely offline.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-6 mt-8">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={(e) => { e.preventDefault(); onNavigate('dashboard'); }}
-              className="w-full sm:w-max px-12 py-5 rounded-full bg-cyan-400 text-[#020617] font-inter font-semibold text-white tracking-widest uppercase shadow-[0_0_40px_rgba(34,211,238,0.4)] hover:shadow-[0_0_60px_rgba(34,211,238,0.7)] transition-all cursor-pointer text-center"
-            >
-              Start for free
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={(e) => { e.preventDefault(); onNavigate('pricing'); }}
-              className="w-full sm:w-max px-12 py-5 rounded-full border border-slate-600 bg-slate-800/50 text-white font-inter font-semibold text-base tracking-widest uppercase hover:bg-slate-800 hover:border-slate-400 transition-all cursor-pointer backdrop-blur-md text-center"
-            >
-              View Pricing
-            </motion.button>
-          </div>
-        </motion.div>
-
-        {/* Interactive Pulse SVG */}
-        <div className="relative h-[400px] flex items-center justify-center lg:justify-end w-full">
-          <div className="absolute inset-0 bg-cyan-500/10 blur-3xl rounded-full" />
-          <motion.svg
-            viewBox="0 0 400 200"
-            className="w-full h-full max-w-lg overflow-visible drop-shadow-[0_0_30px_rgba(34,211,238,0.4)]"
-          >
-            <motion.path
-              d="M 0 100 L 100 100 L 120 50 L 160 150 L 200 20 L 230 180 L 260 80 L 280 100 L 400 100"
-              fill="none"
-              stroke="url(#pulseGradient)"
-              strokeWidth="5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              initial={{ pathLength: 0, opacity: 0 }}
-              animate={{ pathLength: 1, opacity: 1 }}
-              transition={{ duration: 2, ease: "easeInOut", repeat: Infinity, repeatType: "reverse", repeatDelay: 1 }}
-            />
-            <defs>
-              <linearGradient id="pulseGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#0ea5e9" stopOpacity="0.2" />
-                <stop offset="50%" stopColor="#22d3ee" stopOpacity="1" />
-                <stop offset="100%" stopColor="#6366f1" stopOpacity="0.2" />
-              </linearGradient>
-            </defs>
-          </motion.svg>
-        </div>
-      </main>
-
-      {/* NEW: The "Why Edge?" Manifest */}
-      <section className="py-32 bg-[#01030a] border-y border-slate-900 relative z-10 flex flex-col items-center justify-center text-center px-6">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-5xl md:text-7xl font-inter font-semibold text-white leading-tight tracking-tighter mb-12">
-            Cloud AI is a
-            <span className="px-2 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-500">Privacy Crisis.</span>
-          </h2>
-          <p className="text-2xl md:text-4xl text-slate-300 font-medium leading-relaxed mb-12">
-            Sending PHI to a remote server is unacceptable. But running a single local model means risking
-            <motion.span
-              animate={{
-                textShadow: [
-                  "0 0 10px rgba(34,211,238,0)",
-                  "0 0 20px rgba(34,211,238,0.5)",
-                  "0 0 10px rgba(34,211,238,0)"
-                ],
-                opacity: [1, 0.8, 1]
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-              className="mx-3 font-black inline-block text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-500 drop-shadow-[0_0_15px_rgba(34,211,238,0.3)]"
-            >
-              Hallucinations.
-            </motion.span>
-          </p>
-          <div className="h-px w-32 bg-slate-800 mx-auto mb-12"></div>
-          <p className="text-xl md:text-2xl text-cyan-400 font-bold tracking-wide">
-            Hyperion solves this by running an adversarial swarm directly on the edge.
-          </p>
-        </div>
-      </section>
-
-      {/* 3. The Scannable Tech (Scroll-Focus Effect) */}
-      <section className="py-40 relative z-10 bg-[#020617]">
-        <div className="max-w-5xl mx-auto px-6 text-center">
-          <h2 className="text-base font-bold tracking-widest text-slate-500 uppercase mb-16">Pixel-Level Verification</h2>
-          <div className="relative w-full max-w-3xl mx-auto aspect-square md:aspect-video rounded-[40px] overflow-hidden border border-slate-800 bg-black flex items-center justify-center shadow-2xl">
+      {/* Hero Section */}
+      <main className="relative z-10">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-32">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
             <motion.div
-              style={{ filter: mriBlur, opacity: mriOpacity }}
-              className="absolute inset-0 opacity-80"
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, ease: 'easeOut' }}
+              className="space-y-6"
             >
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-600 via-[#01030a] to-black opacity-60" />
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-64 border-[10px] border-white/20 rounded-[50px] blur-sm" />
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-56 border-[8px] border-white/40 rounded-[40px] blur-[2px]" />
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-32 bg-white/60 blur-[4px] rounded-full" />
-              <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px]" />
+
+              <h1 className="text-5xl md:text-6xl font-bold leading-tight">
+                Radiology at the
+                <span className="block bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">Speed of Medicine</span>
+              </h1>
+
+              <p className="text-xl text-slate-300 leading-relaxed">
+                Hyperion brings expert-level X-ray analysis to resource-limited settings. Offline-capable, privacy-first, consensus-driven diagnosis for rural hospitals and urgent care centers.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                <button
+                  onClick={() => onNavigate('pricing')}
+                  className="px-8 py-4 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-lg hover:shadow-lg hover:shadow-cyan-400/50 transition-all font-semibold flex items-center justify-center gap-2 text-slate-950 cursor-pointer"
+                >
+                  Start Free Trial <ArrowRight size={20} />
+                </button>
+                <button
+                  onClick={() => onNavigate('dashboard?autoplay=true')}
+                  className="px-8 py-4 border-2 border-slate-600 rounded-lg hover:border-cyan-400 transition-colors font-semibold cursor-pointer"
+                >
+                  View Demo
+                </button>
+              </div>
             </motion.div>
 
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-20 h-20 border-2 border-cyan-500/50 rounded-full flex items-center justify-center relative shadow-[0_0_30px_rgba(34,211,238,0.2)]">
-                <div className="w-3 h-3 bg-cyan-400 rounded-full shadow-[0_0_15px_rgba(34,211,238,1)]" />
-                <div className="absolute -top-6 w-[2px] h-6 bg-cyan-500/50" />
-                <div className="absolute -bottom-6 w-[2px] h-6 bg-cyan-500/50" />
-                <div className="absolute -left-6 w-6 h-[2px] bg-cyan-500/50" />
-                <div className="absolute -right-6 w-6 h-[2px] bg-cyan-500/50" />
-              </div>
-            </div>
-          </div>
-          <p className="mt-16 text-xl text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed">
-            As LLaVA interprets the raw geometry, the Critic Node actively compares the drafted report against local pixel variances, isolating anomalies with mathematical precision.
-          </p>
-        </div>
-      </section>
-
-      {/* NEW: Dual-Market Strategy Section */}
-      <section className="py-32 relative z-10 bg-[#020617] border-t border-slate-900">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="mb-20 text-center">
-            <h2 className="text-4xl md:text-5xl font-inter font-semibold text-white tracking-tighter mb-6">The Dual-Market Imperative</h2>
-            <p className="text-xl text-slate-400 max-w-3xl mx-auto font-medium leading-relaxed">
-              Hyperion isn't just a diagnostic tool; it's a structural upgrade for both hospital execution and academic pedagogy.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-
-            {/* Clinical Deployments */}
-            <motion.div
-              initial={{ opacity: 0, x: -40 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              className="p-12 rounded-[40px] bg-slate-900/40 border border-slate-800 shadow-2xl relative overflow-hidden group"
-            >
-              <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 blur-[100px] pointer-events-none rounded-full group-hover:bg-cyan-500/20 transition-colors" />
-              <div className="w-16 h-16 bg-cyan-950 border border-cyan-500/50 flex items-center justify-center text-cyan-400 mb-8 rounded-2xl shadow-[0_0_20px_rgba(34,211,238,0.2)]">
-                <CustomIcons.Network />
-              </div>
-              <h3 className="text-3xl font-inter font-semibold text-white mb-6 tracking-tight">Clinical Deployments</h3>
-              <ul className="space-y-4 text-slate-300 font-medium leading-relaxed mb-8">
-                <li className="flex items-baseline gap-3">
-                  <div className="mt-1 w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
-                  Absolute privacy via air-gapped execution.
-                </li>
-                <li className="flex items-baseline gap-3">
-                  <div className="mt-1 w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
-                  Deterministic latency guarantees.
-                </li>
-                <li className="flex items-baseline gap-3">
-                  <div className="mt-1 w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
-                  Zero patient data transit.
-                </li>
-              </ul>
-              <button onClick={() => onNavigate('pricing')} className="text-cyan-400 font-inter font-semibold tracking-widest text-xs uppercase flex items-center gap-2 hover:text-cyan-300 cursor-pointer transition-colors group/btn">
-                View Enterprise Pricing
-                <svg className="w-4 h-4 transform group-hover/btn:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
-              </button>
-            </motion.div>
-
-            {/* Academic Training */}
+            {/* Hero Card */}
             <motion.div
               initial={{ opacity: 0, x: 40 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
-              className="p-12 rounded-[40px] bg-indigo-950/20 border border-indigo-500/30 shadow-[0_0_40px_rgba(99,102,241,0.1)] relative overflow-hidden group hover:border-indigo-500/50 transition-colors"
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 1, ease: 'easeOut', delay: 0.2 }}
+              className="relative"
             >
-              <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-[100px] pointer-events-none rounded-full group-hover:bg-indigo-500/20 transition-colors" />
-              <div className="w-16 h-16 bg-indigo-950 border border-indigo-500/50 flex items-center justify-center text-indigo-400 mb-8 rounded-2xl shadow-[0_0_20px_rgba(99,102,241,0.3)]">
-                <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-                  <path d="M6 12v5c3 3 9 3 12 0v-5" />
-                </svg>
-              </div>
-              <h3 className="text-3xl font-inter font-semibold text-white mb-6 tracking-tight">Hyperion Edu: Discovery Mode</h3>
-              <ul className="space-y-4 text-slate-300 font-medium leading-relaxed mb-8">
-                <li className="flex items-baseline gap-3">
-                  <div className="mt-1 w-2 h-2 rounded-full bg-indigo-400 shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
-                  Interactive masking of diagnostic outputs.
-                </li>
-                <li className="flex items-baseline gap-3">
-                  <div className="mt-1 w-2 h-2 rounded-full bg-indigo-400 shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
-                  Real-time pedagogical nudges via the Critic Node.
-                </li>
-                <li className="flex items-baseline gap-3">
-                  <div className="mt-1 w-2 h-2 rounded-full bg-indigo-400 shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
-                  Self-correcting feedback loops for Residents.
-                </li>
-              </ul>
-
-              {/* The AMD Flex Footnote */}
-              <div className="mt-10 pt-6 border-t border-indigo-900/50">
-                <p className="font-inter text-[10px] text-indigo-300/70 uppercase tracking-widest leading-relaxed">
-                  <strong className="font-inter text-indigo-400">Technical Note:</strong> Discovery Mode leverages the localized AMD ROCm pipeline to generate real-time hints, entirely bypassing external API latency.
-                </p>
+              <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-2xl blur-3xl"></div>
+              <div className="relative bg-slate-900/50 border border-cyan-400/30 rounded-2xl p-8 backdrop-blur-sm">
+                <div className="space-y-4">
+                  <div className="bg-gradient-to-br from-cyan-900 to-blue-900 rounded-xl p-6 border border-cyan-400/30">
+                    <div className="text-sm text-cyan-400 font-semibold mb-3">Sample Analysis</div>
+                    <div className="bg-slate-800 rounded-lg h-40 mb-4 flex items-center justify-center border border-slate-700">
+                      <span className="text-slate-400">X-Ray Image</span>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-slate-300">Status:</span>
+                        <span className="px-3 py-1 bg-yellow-500/20 text-yellow-300 rounded-full text-xs font-semibold">URGENT</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-300">Confidence:</span>
+                        <span className="text-cyan-400 font-semibold">94%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </motion.div>
-
           </div>
-        </div>
-      </section>
+        </section>
+
+        {/* Intelligent Features Section */}
+        <section id="product" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 border-t border-blue-500/20">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">Intelligent Features</h2>
+            <p className="text-xl text-slate-300 max-w-2xl mx-auto">Built for clinical accuracy and workflow efficiency</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { icon: ImageIcon, title: 'Pixel-Level Analysis', desc: 'Deep CNN models analyze every pixel of the chest X-ray for pathology detection with medical-grade accuracy.' },
+              { icon: Users, title: 'Consensus Engine', desc: 'Multi-agent system cross-validates findings. One reads pixels, one drafts reports, one fact-checks—entirely offline.' },
+              { icon: Lock, title: 'Privacy-First', desc: 'All processing happens locally. No cloud uploads, no data retention. HIPAA and GDPR compliant by design.' },
+              { icon: Zap, title: 'Works Offline', desc: 'Deploy to rural hospitals with unreliable connectivity. No internet needed for analysis—only for updates.' },
+              { icon: TrendingUp, title: 'Clinical Dashboard', desc: 'Track patient outcomes, model performance, and diagnostic trends with hospital-wide analytics.' },
+              { icon: Shield, title: 'Regulatory Ready', desc: 'FDA-aligned design, audit trails, explainability, and clinical decision support frameworks.' }
+            ].map((feature, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: idx * 0.08 }}
+                className="bg-slate-900/50 border border-cyan-400/20 rounded-xl p-8 hover:border-cyan-400/50 transition-all hover:shadow-lg hover:shadow-cyan-400/10"
+              >
+                <div className="w-12 h-12 bg-cyan-400/20 rounded-lg flex items-center justify-center mb-4">
+                  <feature.icon className="text-cyan-400" size={24} />
+                </div>
+                <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
+                <p className="text-slate-300">{feature.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+        {/* NEW: Dual-Market Strategy Section */}
+        <section className="py-32 relative z-10 bg-[#020617] border-t border-blue-500/20">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="mb-20 text-center">
+              <h2 className="text-4xl md:text-5xl font-inter font-semibold text-white tracking-tighter mb-6">The Dual-Market Imperative</h2>
+              <p className="text-xl text-slate-400 max-w-3xl mx-auto font-medium leading-relaxed">
+                Hyperion isn't just a diagnostic tool; it's a structural upgrade for both hospital execution and academic pedagogy.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+              {/* Clinical Deployments */}
+              <motion.div
+                initial={{ opacity: 0, x: -40 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+                className="p-12 rounded-[40px] bg-gradient-to-br from-cyan-900/30 to-blue-900/30 border border-cyan-400/30 shadow-2xl relative overflow-hidden group"
+              >
+                <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 blur-[100px] pointer-events-none rounded-full group-hover:bg-cyan-500/20 transition-colors" />
+                <div className="w-16 h-16 bg-cyan-950 border border-cyan-500/50 flex items-center justify-center text-cyan-400 mb-8 rounded-2xl shadow-[0_0_20px_rgba(34,211,238,0.2)]">
+                  <CustomIcons.Network />
+                </div>
+                <h3 className="text-3xl font-inter font-semibold text-white mb-6 tracking-tight">Clinical Deployments</h3>
+                <ul className="space-y-4 text-slate-300 font-medium leading-relaxed mb-8">
+                  <li className="flex items-baseline gap-3">
+                    <div className="mt-1 w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
+                    Absolute privacy via air-gapped execution.
+                  </li>
+                  <li className="flex items-baseline gap-3">
+                    <div className="mt-1 w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
+                    Deterministic latency guarantees.
+                  </li>
+                  <li className="flex items-baseline gap-3">
+                    <div className="mt-1 w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
+                    Zero patient data transit.
+                  </li>
+                </ul>
+                <button onClick={() => onNavigate('pricing')} className="text-cyan-400 font-inter font-semibold tracking-widest text-xs uppercase flex items-center gap-2 hover:text-cyan-300 cursor-pointer transition-colors group/btn">
+                  View Enterprise Pricing
+                  <svg className="w-4 h-4 transform group-hover/btn:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </button>
+              </motion.div>
+
+              {/* Academic Training */}
+              <motion.div
+                initial={{ opacity: 0, x: 40 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+                className="p-12 rounded-[40px] bg-indigo-950/20 border border-indigo-500/30 shadow-[0_0_40px_rgba(99,102,241,0.1)] relative overflow-hidden group hover:border-indigo-500/50 transition-colors"
+              >
+                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-[100px] pointer-events-none rounded-full group-hover:bg-indigo-500/20 transition-colors" />
+                <div className="w-16 h-16 bg-indigo-950 border border-indigo-500/50 flex items-center justify-center text-indigo-400 mb-8 rounded-2xl shadow-[0_0_20px_rgba(99,102,241,0.3)]">
+                  <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                    <path d="M6 12v5c3 3 9 3 12 0v-5" />
+                  </svg>
+                </div>
+                <h3 className="text-3xl font-inter font-semibold text-white mb-6 tracking-tight">Hyperion Edu: Discovery Mode</h3>
+                <ul className="space-y-4 text-slate-300 font-medium leading-relaxed mb-8">
+                  <li className="flex items-baseline gap-3">
+                    <div className="mt-1 w-2 h-2 rounded-full bg-indigo-400 shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
+                    Interactive masking of diagnostic outputs.
+                  </li>
+                  <li className="flex items-baseline gap-3">
+                    <div className="mt-1 w-2 h-2 rounded-full bg-indigo-400 shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
+                    Real-time pedagogical nudges via the Critic Node.
+                  </li>
+                  <li className="flex items-baseline gap-3">
+                    <div className="mt-1 w-2 h-2 rounded-full bg-indigo-400 shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
+                    Self-correcting feedback loops for Residents.
+                  </li>
+                </ul>
+
+                {/* The AMD Flex Footnote */}
+                <div className="mt-10 pt-6 border-t border-indigo-900/50">
+                  <p className="font-inter text-[10px] text-indigo-300/70 uppercase tracking-widest leading-relaxed">
+                    <strong className="font-inter text-indigo-400">Technical Note:</strong> Discovery Mode leverages the localized AMD ROCm pipeline to generate real-time hints, entirely bypassing external API latency.
+                  </p>
+                </div>
+              </motion.div>
+
+            </div>
+          </div>
+        </section>
+        {/* Why Hyperion? Section */}
+        <section id="solutions" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 border-t border-blue-500/20">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">Why Hyperion?</h2>
+            <p className="text-xl text-slate-300">Solving real problems in resource-limited healthcare</p>
+          </div>
+          <div className="grid md:grid-cols-2 gap-12">
+            {[
+              { title: 'Faster Diagnosis', desc: 'Draft radiology reports in seconds, not hours. Critical cases flagged immediately.' },
+              { title: 'No Radiologist Shortage', desc: 'Function in areas with zero radiologists. Consensus validation improves accuracy.' },
+              { title: 'Reduce Misdiagnosis', desc: 'AI catches subtle findings. Multi-agent validation reduces false negatives by 40%.' },
+              { title: 'Cost-Effective', desc: 'One-time deployment cost. No per-scan fees. Immediate ROI in high-volume settings.' },
+              { title: 'Built-In Compliance', desc: 'HIPAA, GDPR, and medical device regulations pre-baked into architecture.' },
+              { title: 'Clinician-Focused', desc: 'Designed with doctors, not just for them. Clear, actionable reports every time.' }
+            ].map((benefit, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: idx * 0.08 }}
+                className="space-y-4"
+              >
+                <div className="flex gap-4">
+                  <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                    <Check className="text-green-400" size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold mb-2">{benefit.title}</h3>
+                    <p className="text-slate-300">{benefit.desc}</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
+        {/* Perfect For Section */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 border-t border-blue-500/20">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">Perfect For</h2>
+          </div>
+          <div className="grid md:grid-cols-4 gap-6">
+            {[
+              { icon: '🏥', title: 'Rural Hospitals', desc: 'No radiologists on staff' },
+              { icon: '🚑', title: 'Urgent Care', desc: 'After-hours diagnosis' },
+              { icon: '🌍', title: 'Developing Regions', desc: 'Limited infrastructure' },
+              { icon: '🔬', title: 'Research', desc: 'Diagnostic validation' }
+            ].map((item, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: idx * 0.1 }}
+                className="bg-slate-900/50 border border-cyan-400/20 rounded-xl p-6 text-center hover:border-cyan-400/50 transition-all hover:shadow-lg hover:shadow-cyan-400/10"
+              >
+                <div className="text-4xl mb-3">{item.icon}</div>
+                <h3 className="font-bold text-lg mb-2">{item.title}</h3>
+                <p className="text-slate-400 text-sm">{item.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+      </main>
+
 
       {/* 4. Scroll Parallax Feature Grid */}
-      <section className="py-40 relative z-10 overflow-hidden bg-[#01030a] border-y border-slate-900">
+      <section className="py-40 relative z-10 overflow-hidden bg-slate-950 border-y border-blue-500/20">
         <div className="max-w-7xl mx-auto px-6">
           <div className="mb-24 text-center">
             <h2 className="text-5xl md:text-6xl font-inter font-semibold text-white tracking-tighter">The Swarm Anatomy</h2>
@@ -397,7 +423,7 @@ export default function LandingPage({ onNavigate }) {
                 <CustomIcons.Eye />
               </div>
               <h3 className="text-2xl font-bold text-white mb-4">1. Edge Vision</h3>
-              <p className="text-slate-300 text-base font-medium leading-relaxed">LLaVA performs deterministic pixel extraction natively on GPU hardware without internet access.</p>
+              <p className="text-slate-300 text-base font-medium leading-relaxed">InternVL reads the scan and extracts visual findings locally—no internet required.</p>
             </motion.div>
 
             <motion.div
@@ -411,7 +437,7 @@ export default function LandingPage({ onNavigate }) {
                 <CustomIcons.Network />
               </div>
               <h3 className="text-2xl font-bold text-white mb-4">2. Drafter Node</h3>
-              <p className="text-slate-300 text-base font-medium leading-relaxed">DeepSeek synthesizes structural data into a preliminary clinical impression in milliseconds.</p>
+              <p className="text-slate-300 text-base font-medium leading-relaxed">Meditron turns the extracted findings into a clear, structured first draft.</p>
             </motion.div>
 
             <motion.div
@@ -425,7 +451,7 @@ export default function LandingPage({ onNavigate }) {
                 <CustomIcons.Nodes />
               </div>
               <h3 className="text-2xl font-bold text-white mb-4">3. Critic Override</h3>
-              <p className="text-slate-200 text-base font-medium leading-relaxed">An independent auditor checks the draft against raw data, violently rejecting hallucinations.</p>
+              <p className="text-slate-200 text-base font-medium leading-relaxed">Llama 3 acts as an independent reviewer, checking the draft against the evidence to reduce hallucinations.</p>
             </motion.div>
 
             <motion.div
@@ -443,6 +469,16 @@ export default function LandingPage({ onNavigate }) {
             </motion.div>
           </div>
         </div>
+      </section>
+
+      {/* 5. Hybrid LLM Intelligence */}
+      <section className="py-40 relative z-10 overflow-hidden bg-slate-950 border-y border-blue-500/20">
+        <div className='flex flex-col gap-2 w-fit mx-auto'>
+          <h1 className='text-center text-4xl font-bold text-white mb-4'>Ready to Transform Radiology?</h1>
+          <p className='text-center text-slate-300 text-lg mb-6'>Join leading hospitals in Asia and Africa deploying AI-powered diagnosis today. Start with a free pilot—no credit card required.</p>
+          <button className='px-8 py-4 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-lg hover:shadow-lg hover:shadow-cyan-400/50 transition-all font-semibold flex items-center justify-center gap-2 text-slate-950 cursor-pointer w-fit mx-auto' onClick={() => navigate('/dashboard')}>Start Free Trial</button>
+        </div>
+
       </section>
 
       <Footer onNavigate={onNavigate} />

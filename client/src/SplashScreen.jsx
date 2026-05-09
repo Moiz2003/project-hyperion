@@ -5,14 +5,14 @@ import { HyperionLogo } from './Logo';
 
 export default function SplashScreen({ onComplete }) {
   const [progress, setProgress] = useState(0);
-  const [statusText, setStatusText] = useState('Initializing RTX Hardware...');
+  const [statusText, setStatusText] = useState('Starting Hyperion...');
 
   useEffect(() => {
     const sequence = [
-      { p: 20, text: 'Booting LLaVA Vision Node...', delay: 500 },
-      { p: 50, text: 'Connecting to DeepSeek Drafter...', delay: 1200 },
-      { p: 85, text: 'Loading Critic Adversarial Weights...', delay: 1800 },
-      { p: 100, text: 'Swarm Intelligence Online.', delay: 2400 }
+      { p: 20, text: 'Warming up Vision (InternVL)...', delay: 500 },
+      { p: 50, text: 'Starting Drafter (Meditron)...', delay: 1200 },
+      { p: 85, text: 'Enabling Critic checks (Llama 3)...', delay: 1800 },
+      { p: 100, text: 'Ready.', delay: 2400 }
     ];
 
     sequence.forEach(({ p, text, delay }) => {
@@ -42,7 +42,7 @@ export default function SplashScreen({ onComplete }) {
         transition={{ duration: 0.5 }}
         className="flex flex-col items-center"
       >
-        <HyperionLogo className="h-32 w-auto mb-12" />
+        <HyperionLogo className="h-52 w-auto mb-0" />
 
         <div className="w-64 h-1 bg-slate-900 rounded-full overflow-hidden mb-4">
           <motion.div 

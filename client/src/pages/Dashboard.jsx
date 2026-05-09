@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { HyperionLogo } from '../Logo'
 import ScanHistorySidebar from '../ScanHistorySidebar'
 import { generateClinicalPDF } from '../pdfReport'
@@ -19,6 +19,7 @@ const MAX_SSE_BUFFER_BYTES = 1_048_576 // 1 MB
 
 export default function Dashboard() {
   const navigate = useNavigate()
+  const location = useLocation()
   const abortRef = useRef(null) // AbortController ref for cleanup
 
   const [engineMode, setEngineMode] = useState('clinical')
@@ -135,16 +136,48 @@ export default function Dashboard() {
     }
     setFile(DEMO_SCAN.file)
     setPreviewUrl(DEMO_SCAN.previewUrl)
-    setResults(DEMO_SCAN.result)
-    setSwarmEvents(DEMO_SCAN.events)
-    setStreamLatency(DEMO_SCAN.result.processing_latency)
+    setResults(null)
+    setSwarmEvents([])
+    setStreamLatency(null)
     setStreamMode(DEMO_SCAN.streamMode)
     setError(null)
     setFileSizeError(false)
     setIsRevealed(false)
     setHint(null)
-    setIsLoading(false)
+    setIsLoading(true)
+
+    let eventIndex = 0;
+    const events = DEMO_SCAN.events;
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    const simulateStream = () => {
+      if (controller.signal.aborted) return;
+      if (eventIndex < events.length) {
+        const ev = events[eventIndex];
+        setSwarmEvents(prev => [...prev, ev]);
+        
+        if (ev.type === 'pipeline_complete') {
+          setResults(DEMO_SCAN.result);
+          setStreamLatency(DEMO_SCAN.result.processing_latency);
+          setIsLoading(false);
+          return;
+        }
+
+        eventIndex++;
+        setTimeout(simulateStream, 800); 
+      }
+    };
+
+    setTimeout(simulateStream, 500);
   }, [])
+
+  // Auto-play demo if requested via URL
+  useEffect(() => {
+    if (location.search.includes('autoplay=true')) {
+      handleLoadDemo()
+    }
+  }, [location.search, handleLoadDemo])
 
   const analyzeScan = useCallback(async () => {
     if (!file) return
@@ -310,7 +343,7 @@ export default function Dashboard() {
   const loadingText = (() => {
     if (!isLoading || swarmEvents.length === 0) return 'Initializing AI swarm...'
     const last = swarmEvents[swarmEvents.length - 1]
-    if (last.type === 'agent_start') return last.detail || `${last.label} running...`
+    if (last.type === 'agent_start') return `${last.label}: ${last.detail || 'running...'}`
     if (last.type === 'agent_retry') return `Drafter retrying with simplified prompt...`
     if (last.type === 'critic_rejected') return `Critic rejected draft — revising (${last.interventions} interventions)...`
     if (last.type === 'critic_accepted') return 'Consensus accepted — finalizing report...'
@@ -320,10 +353,10 @@ export default function Dashboard() {
   const showVisualizer = isLoading || swarmEvents.length > 0
 
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-200 font-inter p-6 selection:bg-cyan-500/30">
+    <div className="min-h-screen bg-[#0a1628] text-slate-200 font-inter p-6 selection:bg-cyan-500/30">
       <div className="max-w-7xl mx-auto space-y-8">
 
-        <header className="flex flex-col md:flex-row items-center justify-between pb-6 border-b border-slate-800/60 gap-4">
+        <header className="flex flex-col md:flex-row items-center justify-between pb-6 border-b border-blue-500/20 gap-4">
           {/* Left: logo */}
           <div className="flex items-center cursor-pointer shrink-0" onClick={() => navigate('/')}>
             <HyperionLogo horizontal={true} className="h-16 w-auto" />
@@ -335,31 +368,32 @@ export default function Dashboard() {
 
             <button
               onClick={() => navigate('/analytics')}
-              className="text-xs font-bold tracking-widest uppercase text-slate-500 hover:text-cyan-400 transition-colors border border-slate-800 px-4 py-2 rounded-full hover:border-cyan-500/40"
+              className="text-[10px] font-bold tracking-widest uppercase text-slate-400 hover:text-cyan-400 transition-colors bg-[#000]/30 border border-slate-800 px-4 py-2 rounded-md hover:border-cyan-400/50"
             >
               Analytics
             </button>
 
-            <div className="flex items-center gap-1.5 p-1.5 bg-[#000] border border-slate-800 rounded-full">
+            <div className="flex items-center gap-1.5 p-1 bg-[#000]/50 border border-slate-800 rounded-md">
               <button
                 onClick={() => setEngineMode('clinical')}
                 title="Full adversarial consensus loop — up to 3 agent iterations"
-                className={`flex items-center gap-2 px-5 py-2 rounded-full text-xs font-inter font-semibold tracking-widest uppercase transition-all duration-300 ${engineMode === 'clinical' ? 'bg-cyan-950/50 text-cyan-400 border border-cyan-500/50 shadow-[0_0_15px_rgba(34,211,238,0.2)]' : 'text-slate-500 hover:text-white border border-transparent'}`}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-inter font-semibold tracking-widest uppercase transition-all duration-300 ${engineMode === 'clinical' ? 'bg-[#00D9FF]/10 text-[#00D9FF] border border-[#00D9FF]/30 shadow-[0_0_15px_rgba(0,217,255,0.1)]' : 'text-slate-500 hover:text-white border border-transparent'}`}
               >
-                <HUDIcons.Brain /> Deep Clinical
+                <div className={`w-1.5 h-1.5 rounded-full ${engineMode === 'clinical' ? 'bg-[#00D9FF] shadow-[0_0_8px_rgba(0,217,255,1)]' : 'bg-slate-700'}`} />
+                Deep Clinical
               </button>
               <button
                 onClick={() => setEngineMode('demo')}
                 title="Single-pass analysis — fast for stage demonstrations"
-                className={`flex items-center gap-2 px-5 py-2 rounded-full text-xs font-inter font-semibold tracking-widest uppercase transition-all duration-300 ${engineMode === 'demo' ? 'bg-indigo-950/50 text-indigo-400 border border-indigo-500/50 shadow-[0_0_15px_rgba(99,102,241,0.2)]' : 'text-slate-500 hover:text-white border border-transparent'}`}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-inter font-semibold tracking-widest uppercase transition-all duration-300 ${engineMode === 'demo' ? 'bg-indigo-900/20 text-indigo-400 border border-indigo-500/30' : 'text-slate-500 hover:text-white border border-transparent'}`}
               >
                 <HUDIcons.GraduationCap /> Fast Demo
               </button>
               <button
                 onClick={() => setEngineMode('batch')}
-                className={`flex items-center gap-2 px-5 py-2 rounded-full text-xs font-inter font-semibold tracking-widest uppercase transition-all duration-300 ${engineMode === 'batch' ? 'bg-violet-950/50 text-violet-400 border border-violet-500/50 shadow-[0_0_15px_rgba(139,92,246,0.2)]' : 'text-slate-500 hover:text-white border border-transparent'}`}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-inter font-semibold tracking-widest uppercase transition-all duration-300 ${engineMode === 'batch' ? 'bg-violet-900/20 text-violet-400 border border-violet-500/30' : 'text-slate-500 hover:text-white border border-transparent'}`}
               >
-                ⚡ Batch
+                <HUDIcons.Activity /> Batch
               </button>
             </div>
           </div>
@@ -372,7 +406,7 @@ export default function Dashboard() {
         />
 
         {engineMode === 'batch' && (
-          <div className="rounded-3xl border border-slate-800 bg-slate-900/20 p-6">
+          <div className="rounded-3xl border border-cyan-500/20 bg-[#0f2341]/20 p-6 backdrop-blur-xl">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-1.5 h-1.5 rounded-full bg-violet-500 shadow-[0_0_8px_rgba(139,92,246,0.8)]" />
               <h2 className="text-sm font-bold tracking-widest uppercase text-slate-300">Batch Analysis — Parallel Swarm</h2>
@@ -395,7 +429,7 @@ export default function Dashboard() {
               <p className="text-slate-400 text-sm">A critical component crashed. Please reload the page.</p>
             </div>
           }>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full min-h-[75vh]">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full h-fit">
               <div className="flex flex-col gap-6">
                 <UploadZone
                   file={file}

@@ -85,12 +85,12 @@ export default function ContactPage({ onNavigate }) {
           className="bg-slate-900/40 backdrop-blur-xl border border-slate-800 p-8 md:p-16 rounded-[40px] shadow-2xl relative overflow-hidden"
         >
           {/* Decorative Glow */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-[100px] pointer-events-none rounded-full" />
+          <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 blur-[100px] pointer-events-none rounded-full" />
 
           <div className="mb-12 border-b border-slate-800 pb-12 relative z-10">
             <h2 className="text-xs font-bold tracking-widest text-cyan-400 uppercase mb-4">Get in Touch</h2>
             <h1 className="text-4xl md:text-6xl font-bold text-white tracking-tighter leading-tight">
-              Contact Hyperion
+              Contact Us
             </h1>
           </div>
 
@@ -101,8 +101,8 @@ export default function ContactPage({ onNavigate }) {
                 animate={{ opacity: 1, scale: 1 }}
                 className="text-center py-20"
               >
-                <div className="w-20 h-20 bg-emerald-500/20 border border-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <svg className="w-10 h-10 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="w-20 h-20 bg-green-500/20 border border-green-400 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <svg className="w-10 h-10 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
@@ -112,7 +112,7 @@ export default function ContactPage({ onNavigate }) {
                 </p>
                 <button
                   onClick={() => onNavigate('landing')}
-                  className="mt-8 px-8 py-3 rounded-full bg-white text-black font-bold text-sm tracking-widest uppercase hover:bg-slate-200 transition-all"
+                  className="mt-8 px-8 py-3 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 font-bold text-sm tracking-widest uppercase hover:shadow-lg hover:shadow-cyan-400/50 transition-all"
                 >
                   Return Home
                 </button>
@@ -125,7 +125,7 @@ export default function ContactPage({ onNavigate }) {
                     <input
                       required
                       type="text"
-                      className="w-full bg-black/40 border border-slate-800 rounded-xl px-5 py-4 text-white focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all"
+                      className="w-full bg-black/40 border border-slate-700 rounded-xl px-5 py-4 text-white focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/50 transition-all"
                       placeholder="Dr. John Doe"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -136,7 +136,7 @@ export default function ContactPage({ onNavigate }) {
                     <input
                       required
                       type="email"
-                      className="w-full bg-black/40 border border-slate-800 rounded-xl px-5 py-4 text-white focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all"
+                      className="w-full bg-black/40 border border-slate-700 rounded-xl px-5 py-4 text-white focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/50 transition-all"
                       placeholder="john@hospital.org"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -147,7 +147,7 @@ export default function ContactPage({ onNavigate }) {
                   <label className="text-xs font-bold tracking-widest text-slate-500 uppercase">Message</label>
                   <textarea
                     required
-                    className="w-full bg-black/40 border border-slate-800 rounded-xl px-5 py-4 text-white focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all min-h-[200px]"
+                    className="w-full bg-black/40 border border-slate-700 rounded-xl px-5 py-4 text-white focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/50 transition-all min-h-[200px]"
                     placeholder="How can our swarm help your clinical team?"
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
@@ -156,7 +156,7 @@ export default function ContactPage({ onNavigate }) {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-5 rounded-2xl bg-cyan-400 text-[#020617] font-bold text-white text-sm tracking-widest uppercase hover:bg-cyan-300  cursor-pointer transition-all shadow-[0_0_30px_rgba(34,211,238,0.2)] active:scale-[0.98] disabled:opacity-50"
+                  className="w-full py-5 rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 font-bold text-sm tracking-widest uppercase hover:shadow-lg hover:shadow-cyan-400/50 cursor-pointer transition-all shadow-[0_0_30px_rgba(34,211,238,0.2)] active:scale-[0.98] disabled:opacity-50"
                 >
                   {isSubmitting ? 'Transmitting...' : 'Submit'}
                 </button>

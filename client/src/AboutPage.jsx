@@ -67,14 +67,14 @@ export default function AboutPage({ onNavigate }) {
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
-            <article className="rounded-2xl border border-slate-800 bg-black/30 p-6">
+            <article className="rounded-2xl border border-cyan-400/20 bg-slate-900/50 p-6 hover:border-cyan-400/50 transition-all hover:shadow-lg hover:shadow-cyan-400/10">
               <h2 className="text-xl font-semibold text-white mb-3">Why Hyperion</h2>
               <p className="text-slate-400 leading-relaxed">
                 We combine edge-native AI inference with clinician-first design so decisions are faster, explainable, and
                 deployable in constrained environments.
               </p>
             </article>
-            <article className="rounded-2xl border border-slate-800 bg-black/30 p-6">
+            <article className="rounded-2xl border border-cyan-400/20 bg-slate-900/50 p-6 hover:border-cyan-400/50 transition-all hover:shadow-lg hover:shadow-cyan-400/10">
               <h2 className="text-xl font-semibold text-white mb-3">Security / Compliance</h2>
               <p className="text-slate-400 leading-relaxed">
                 Hyperion is designed to support HIPAA-aligned workflows with protected data handling, role-aware access,

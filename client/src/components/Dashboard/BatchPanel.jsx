@@ -47,7 +47,7 @@ function ResultCard({ item, index }) {
           </div>
           <button
             onClick={() => setOpen(v => !v)}
-            className="text-[10px] font-bold text-indigo-400 tracking-widest uppercase hover:text-indigo-300 transition-colors text-left"
+            className="text-[10px] font-bold text-cyan-400 tracking-widest uppercase hover:text-cyan-300 transition-colors text-left"
           >
             {open ? 'Hide report ▲' : 'View report ▼'}
           </button>
@@ -134,7 +134,7 @@ export default function BatchPanel() {
       {/* Upload zone */}
       <div
         onClick={() => !isLoading && inputRef.current?.click()}
-        className="relative flex flex-col items-center justify-center gap-4 p-8 rounded-3xl border-2 border-dashed border-slate-700 hover:border-violet-500/50 bg-slate-900/20 hover:bg-violet-950/10 transition-all cursor-pointer min-h-[160px]"
+        className="relative flex flex-col items-center justify-center gap-4 p-8 rounded-3xl border-2 border-dashed border-slate-700 hover:border-cyan-400/50 bg-slate-900/20 hover:bg-cyan-950/10 transition-all cursor-pointer min-h-[160px]"
       >
         <input
           ref={inputRef}
@@ -176,14 +176,14 @@ export default function BatchPanel() {
       {files.length > 0 && !isLoading && !results && (
         <button
           onClick={runBatch}
-          className="w-full py-4 rounded-2xl bg-violet-600 hover:bg-violet-500 text-white font-inter font-bold text-xs tracking-widest uppercase transition-all hover:shadow-[0_0_30px_rgba(139,92,246,0.4)]"
+          className="w-full py-4 rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:shadow-lg hover:shadow-cyan-400/50 text-slate-950 font-inter font-bold text-xs tracking-widest uppercase transition-all"
         >
           Analyze {files.length} Scan{files.length !== 1 ? 's' : ''} — Parallel Swarm
         </button>
       )}
 
       {isLoading && (
-        <div className="flex items-center justify-center gap-3 py-8 text-violet-400 font-mono text-xs animate-pulse">
+        <div className="flex items-center justify-center gap-3 py-8 text-cyan-400 font-mono text-xs animate-pulse">
           <span className="text-xl">⚡</span>
           Running {files.length} parallel swarm pipelines...
         </div>
@@ -197,7 +197,7 @@ export default function BatchPanel() {
           className="grid grid-cols-2 md:grid-cols-4 gap-3"
         >
           {[
-            { label: 'Analyzed', value: summary.total, color: 'text-violet-400' },
+            { label: 'Analyzed', value: summary.total, color: 'text-cyan-400' },
             { label: 'Success', value: summary.success, color: 'text-emerald-400' },
             { label: 'High Urgency', value: summary.urgency_distribution.High, color: 'text-red-400' },
             { label: 'Partial', value: summary.partial, color: 'text-amber-400' },

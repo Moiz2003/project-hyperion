@@ -1,0 +1,509 @@
+.hyperion-solutions-page {
+    font-family: 'Manrope', sans-serif;
+    color: #ffffff;
+    --primary: #00D4FF;
+    --primary-dark: #0099CC;
+    --secondary: #1a1f35;
+    --surface: #0f1419;
+    --surface-alt: #151b2f;
+    --text-primary: #ffffff;
+    --text-secondary: #cbd5e1; /* Improved contrast from #a0a8c0 */
+    --accent-green: #10b981;
+    --accent-orange: #f97316;
+    --accent-purple: #7c3aed;
+}
+
+.hyperion-solutions-page .solutions-hero {
+    padding: 6rem 3rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.hyperion-solutions-page .solutions-hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 3.2rem;
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    line-height: 1.2;
+}
+
+.hyperion-solutions-page .solutions-hero h1 .highlight {
+    background: linear-gradient(135deg, var(--primary), #00f0ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hyperion-solutions-page .solutions-hero p {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    max-width: 700px;
+    margin: 0 auto 2rem;
+    line-height: 1.7;
+}
+
+.hyperion-solutions-page .hero-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.hyperion-solutions-page .solutions-section {
+    padding: 4rem 3rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.hyperion-solutions-page .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 2.8rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.hyperion-solutions-page .section-subtitle {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    max-width: 600px;
+    margin: 0 auto 3rem;
+}
+
+.hyperion-solutions-page .solutions-category {
+    margin-bottom: 4rem;
+}
+
+.hyperion-solutions-page .category-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: 'Syne', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.hyperion-solutions-page .solutions-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.hyperion-solutions-page .solution-card {
+    border: 1px solid rgba(0, 212, 255, 0.1);
+    border-radius: 12px;
+    padding: 2.5rem;
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.05), rgba(124, 58, 237, 0.05));
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.hyperion-solutions-page .solution-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 0 30px rgba(0, 212, 255, 0.2);
+    transform: translateY(-8px);
+}
+
+.hyperion-solutions-page .solution-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: rgba(0, 212, 255, 0.1);
+    border: 1px solid var(--primary);
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--primary);
+    margin-bottom: 1rem;
+}
+
+.hyperion-solutions-page .solution-icon-wrapper {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: rgba(0, 212, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(0, 212, 255, 0.2);
+}
+
+.hyperion-solutions-page .solution-icon-svg {
+    width: 32px;
+    height: 32px;
+    color: var(--primary);
+}
+
+.hyperion-solutions-page .solution-card h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.hyperion-solutions-page .solution-card p {
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+}
+
+.hyperion-solutions-page .solution-highlights {
+    list-style: none;
+    margin-bottom: 2rem;
+    padding: 0;
+}
+
+.hyperion-solutions-page .solution-highlights li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+}
+
+.hyperion-solutions-page .solution-highlights li::before {
+    content: '✓';
+    color: var(--accent-green);
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.hyperion-solutions-page .solution-metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(0, 212, 255, 0.1);
+}
+
+.hyperion-solutions-page .metric {
+    text-align: center;
+}
+
+.hyperion-solutions-page .metric-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.hyperion-solutions-page .metric-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 0.5rem;
+}
+
+.hyperion-solutions-page .implementation {
+    padding: 4rem 3rem;
+    background: linear-gradient(180deg, rgba(0, 212, 255, 0.02), transparent);
+}
+
+.hyperion-solutions-page .implementation-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.hyperion-solutions-page .implementation-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+}
+
+.hyperion-solutions-page .implementation-content h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+}
+
+.hyperion-solutions-page .implementation-content p {
+    color: var(--text-secondary);
+    line-height: 1.8;
+    margin-bottom: 1.5rem;
+}
+
+.hyperion-solutions-page .implementation-steps {
+    list-style: none;
+    counter-reset: step-counter;
+    margin-top: 2rem;
+    padding: 0;
+}
+
+.hyperion-solutions-page .implementation-steps li {
+    counter-increment: step-counter;
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.hyperion-solutions-page .step-number {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--primary), #00d9ff);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: var(--secondary);
+    flex-shrink: 0;
+    font-size: 1.1rem;
+}
+
+.hyperion-solutions-page .step-content {
+    flex: 1;
+}
+
+.hyperion-solutions-page .step-content h4 {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.hyperion-solutions-page .step-content p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+.hyperion-solutions-page .implementation-visual {
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.3);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+.hyperion-solutions-page .roi-section {
+    padding: 4rem 3rem;
+}
+
+.hyperion-solutions-page .roi-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.hyperion-solutions-page .roi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.hyperion-solutions-page .roi-card {
+    border: 1px solid rgba(0, 212, 255, 0.1);
+    border-radius: 12px;
+    padding: 2rem;
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.05), rgba(124, 58, 237, 0.05));
+    text-align: center;
+}
+
+.hyperion-solutions-page .roi-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 1rem;
+}
+
+.hyperion-solutions-page .roi-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--primary), #00f0ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+}
+
+.hyperion-solutions-page .roi-desc {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.hyperion-solutions-page .case-study {
+    padding: 4rem 3rem;
+    background: linear-gradient(180deg, transparent, rgba(0, 212, 255, 0.02));
+}
+
+.hyperion-solutions-page .case-study-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.hyperion-solutions-page .case-study-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+    margin-top: 2rem;
+}
+
+.hyperion-solutions-page .case-study-text h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+}
+
+.hyperion-solutions-page .case-study-text p {
+    color: var(--text-secondary);
+    line-height: 1.8;
+    margin-bottom: 1.5rem;
+}
+
+.hyperion-solutions-page .case-study-results {
+    list-style: none;
+    margin-top: 2rem;
+    padding: 0;
+}
+
+.hyperion-solutions-page .case-study-results li {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: rgba(0, 212, 255, 0.05);
+    border-radius: 8px;
+    border-left: 3px solid var(--primary);
+}
+
+.hyperion-solutions-page .pull-quote {
+    padding: 2rem;
+    background: rgba(0, 212, 255, 0.05);
+    border-left: 4px solid var(--primary);
+    border-radius: 0 12px 12px 0;
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.hyperion-solutions-page .pull-quote p {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem;
+    font-style: italic;
+    color: #fff;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+}
+
+.hyperion-solutions-page .pull-quote cite {
+    font-size: 0.9rem;
+    color: var(--primary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.hyperion-solutions-page .result-icon-wrapper {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.hyperion-solutions-page .case-study-visual {
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.3);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+.hyperion-solutions-page .integrations {
+    padding: 4rem 3rem;
+}
+
+.hyperion-solutions-page .integrations-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.hyperion-solutions-page .integrations-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.hyperion-solutions-page .integration-card {
+    border: 1px solid rgba(0, 212, 255, 0.1);
+    border-radius: 8px;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.02), rgba(124, 58, 237, 0.02));
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.hyperion-solutions-page .integration-card:hover {
+    border-color: var(--primary);
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.08), rgba(124, 58, 237, 0.08));
+}
+
+.hyperion-solutions-page .integration-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.hyperion-solutions-page .integration-name {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.hyperion-solutions-page .integration-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.hyperion-solutions-page .solutions-cta {
+    padding: 4rem 3rem;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .hyperion-solutions-page .solutions-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .hyperion-solutions-page .roi-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .hyperion-solutions-page .roi-value {
+        font-size: 1.8rem;
+    }
+
+    .hyperion-solutions-page .integrations-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .hyperion-solutions-page .implementation-grid,
+    .hyperion-solutions-page .case-study-content {
+        grid-template-columns: 1fr;
+    }
+
+    .hyperion-solutions-page .solutions-hero h1 {
+        font-size: 2.5rem;
+    }
+    
+    .hyperion-solutions-page .section-title {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .hyperion-solutions-page .roi-grid {
+        grid-template-columns: 1fr;
+    }
+}

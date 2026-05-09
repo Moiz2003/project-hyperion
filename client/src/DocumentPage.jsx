@@ -67,7 +67,7 @@ const DOC_CONTENT = {
         
         <div className="p-8 rounded-2xl bg-slate-900/40 border border-slate-800 shadow-xl relative overflow-hidden group hover:border-cyan-500/50 transition-colors">
           <div className="absolute top-0 left-0 w-1 h-full bg-cyan-500 shadow-[0_0_20px_rgba(34,211,238,1)]"></div>
-          <h3 className="text-2xl font-inter font-semibold text-white mb-4">Node 1: Edge Vision (LLaVA)</h3>
+          <h3 className="text-2xl font-inter font-semibold text-white mb-4">Node 1: Edge Vision (InternVL)</h3>
           <p className="text-slate-400 leading-relaxed">
             A lightweight, multimodal agent dedicated entirely to geometry extraction. It doesn't attempt to diagnose; it simply maps the pixel variances and flags structural anomalies in the scan. Runs perfectly on an RTX 3050.
           </p>
@@ -75,17 +75,17 @@ const DOC_CONTENT = {
 
         <div className="p-8 rounded-2xl bg-slate-900/40 border border-slate-800 shadow-xl relative overflow-hidden group hover:border-blue-500/50 transition-colors">
           <div className="absolute top-0 left-0 w-1 h-full bg-blue-500 shadow-[0_0_20px_rgba(59,130,246,1)]"></div>
-          <h3 className="text-2xl font-inter font-semibold text-white mb-4">Node 2: The Drafter (DeepSeek)</h3>
+          <h3 className="text-2xl font-inter font-semibold text-white mb-4">Node 2: The Drafter (Meditron)</h3>
           <p className="text-slate-400 leading-relaxed">
             The Drafter takes the raw geometry from Node 1 and cross-references it against a massive embedded clinical knowledge base to write a preliminary impression.
           </p>
         </div>
 
-        <div className="p-8 rounded-2xl bg-indigo-950/20 border border-indigo-500/30 shadow-[0_0_30px_rgba(99,102,241,0.1)] relative overflow-hidden group hover:border-indigo-400 transition-colors">
-          <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500 shadow-[0_0_20px_rgba(99,102,241,1)]"></div>
+        <div className="p-8 rounded-2xl bg-slate-900/50 border border-cyan-400/20 shadow-xl relative overflow-hidden group hover:border-cyan-400/50 transition-colors">
+          <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-cyan-400 to-blue-500 shadow-[0_0_20px_rgba(34,211,238,0.8)]"></div>
           <h3 className="text-2xl font-inter font-semibold text-white mb-4">Node 3: The Critic Node</h3>
           <p className="text-slate-400 leading-relaxed">
-            The adversarial auditor. It violently checks the Drafter's output against the raw pixels. If the Drafter hallucinated a condition that does not exist in the source pixels, the Critic rejects it and forces a re-draft. Consensus must reach 100% before the report is finalized.
+            The independent auditor. It checks the Drafter's output against the underlying evidence. If a claim isn't supported by what the system can point to, the Critic flags it and requests a revision before finalizing.
           </p>
         </div>
       </div>
@@ -108,7 +108,7 @@ const DOC_CONTENT = {
         <h3 className="text-2xl font-inter font-semibold text-white mt-12 mb-6">Local Installation via Ollama</h3>
         <div className="p-6 bg-[#000] border border-slate-800 rounded-xl font-mono text-sm text-cyan-400 shadow-inner">
           <p className="text-slate-600 mb-2"># Install the Vision Agent (Node 1)</p>
-          <p>ollama run llava</p>
+          <p>ollama run internvl</p>
           <br/>
           <p className="text-slate-600 mb-2"># Start the Express Orchestrator</p>
           <p>cd server && npm run dev</p>
@@ -235,7 +235,7 @@ export default function DocumentPage({ type, onNavigate }) {
           className="bg-slate-900/40 backdrop-blur-xl border border-slate-800 p-8 md:p-16 rounded-[40px] shadow-2xl relative overflow-hidden"
         >
           {/* Decorative Glow */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-[100px] pointer-events-none rounded-full" />
+          <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 blur-[100px] pointer-events-none rounded-full" />
           
           <div className="mb-12 border-b border-slate-800 pb-12 relative z-10">
             <h2 className="text-xs font-bold tracking-widest text-cyan-400 uppercase mb-4">{doc.subtitle}</h2>
