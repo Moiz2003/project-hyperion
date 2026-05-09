@@ -65,6 +65,18 @@ Additional note: Consider atypical pathogen coverage (azithromycin or doxycyclin
 }
 \`\`\``
 
+const SOCRATIC_RESPONSE_JSON = JSON.stringify({
+  hint_question: 'What do you notice about the silhouette of the right upper lung field, and how does it differ from the left?',
+  clinical_context: 'Adult patient presents with a 3-day history of fever and productive cough.',
+  focus_anatomy: 'Right upper lobe',
+  difficulty: 'intermediate',
+  key_finding: 'Increased opacity with air bronchograms in the right upper zone',
+})
+
+const SOCRATIC_RESPONSE_FENCED = '```json\n' + SOCRATIC_RESPONSE_JSON + '\n```'
+
+const SOCRATIC_RESPONSE_RAW_TEXT = 'What do you notice about the right upper lung field compared to the left?'
+
 // Minimal 1x1 white JPEG (valid image bytes)
 const MINIMAL_JPEG = Buffer.from(
   '/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8U' +
@@ -93,6 +105,9 @@ module.exports = {
   DRAFTER_RESPONSE,
   CRITIC_RESPONSE_CLEAN,
   CRITIC_RESPONSE_WITH_ISSUES,
+  SOCRATIC_RESPONSE_JSON,
+  SOCRATIC_RESPONSE_FENCED,
+  SOCRATIC_RESPONSE_RAW_TEXT,
   MINIMAL_JPEG,
   makeChatResponse,
 }

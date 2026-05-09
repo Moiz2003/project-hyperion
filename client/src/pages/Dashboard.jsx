@@ -11,16 +11,12 @@ import SwarmStatus from '../components/Dashboard/SwarmStatus'
 import BatchPanel from '../components/Dashboard/BatchPanel'
 import ErrorBoundary from '../components/ErrorBoundary'
 import { DEMO_SCAN } from '../data/demoScan'
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
-
-// Max accumulated SSE buffer before forced flush (prevents OOM on long streams)
-const MAX_SSE_BUFFER_BYTES = 1_048_576 // 1 MB
+import { API_BASE, MAX_SSE_BUFFER_BYTES } from '../utils/constants'
 
 export default function Dashboard() {
   const navigate = useNavigate()
   const location = useLocation()
-  const abortRef = useRef(null) // AbortController ref for cleanup
+  const abortRef = useRef(null)
 
   const [engineMode, setEngineMode] = useState('clinical')
   const [file, setFile] = useState(null)
@@ -36,10 +32,12 @@ export default function Dashboard() {
   const [streamLatency, setStreamLatency] = useState(null)
   const [streamMode, setStreamMode] = useState('demo')
 
+  // Education mode state
   const [isRevealed, setIsRevealed] = useState(false)
   const [residentInput, setResidentInput] = useState('')
   const [hint, setHint] = useState(null)
   const [isHintLoading, setIsHintLoading] = useState(false)
+  const [diagnosisMatch, setDiagnosisMatch] = useState(null)
 
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -56,6 +54,7 @@ export default function Dashboard() {
     setIsRevealed(false)
     setResidentInput('')
     setHint(null)
+    setDiagnosisMatch(null)
     setSwarmEvents([])
     setStreamLatency(null)
     if (selectedFile.size > 15 * 1024 * 1024) {
@@ -79,7 +78,6 @@ export default function Dashboard() {
   }
 
   const clearSelection = () => {
-    // Abort any in-flight SSE stream
     if (abortRef.current) {
       abortRef.current.abort()
       abortRef.current = null
@@ -92,6 +90,7 @@ export default function Dashboard() {
     setIsRevealed(false)
     setResidentInput('')
     setHint(null)
+    setDiagnosisMatch(null)
     setSwarmEvents([])
     setStreamLatency(null)
   }
@@ -106,6 +105,7 @@ export default function Dashboard() {
       recommended_dept: scan.recommendedDept,
       processing_latency: scan.processingLatency,
       _imageBase64: scan.imageBase64,
+      _imageHash: scan.imageHash,
       partial: false,
     })
     setSwarmEvents([])
@@ -113,6 +113,7 @@ export default function Dashboard() {
     setError(null)
     setFileSizeError(false)
     setIsRevealed(false)
+    setDiagnosisMatch(null)
   }, [])
 
   const handleDownloadPDF = useCallback(() => {
@@ -129,7 +130,6 @@ export default function Dashboard() {
   }, [results])
 
   const handleLoadDemo = useCallback(() => {
-    // Abort any in-flight SSE stream
     if (abortRef.current) {
       abortRef.current.abort()
       abortRef.current = null
@@ -144,6 +144,7 @@ export default function Dashboard() {
     setFileSizeError(false)
     setIsRevealed(false)
     setHint(null)
+    setDiagnosisMatch(null)
     setIsLoading(true)
 
     let eventIndex = 0;
@@ -156,7 +157,7 @@ export default function Dashboard() {
       if (eventIndex < events.length) {
         const ev = events[eventIndex];
         setSwarmEvents(prev => [...prev, ev]);
-        
+
         if (ev.type === 'pipeline_complete') {
           setResults(DEMO_SCAN.result);
           setStreamLatency(DEMO_SCAN.result.processing_latency);
@@ -165,7 +166,7 @@ export default function Dashboard() {
         }
 
         eventIndex++;
-        setTimeout(simulateStream, 800); 
+        setTimeout(simulateStream, 800);
       }
     };
 
@@ -182,7 +183,6 @@ export default function Dashboard() {
   const analyzeScan = useCallback(async () => {
     if (!file) return
 
-    // Abort any previous in-flight request
     if (abortRef.current) abortRef.current.abort()
     const controller = new AbortController()
     abortRef.current = controller
@@ -193,18 +193,21 @@ export default function Dashboard() {
     setFileSizeError(false)
     setIsRevealed(false)
     setHint(null)
+    setDiagnosisMatch(null)
     setSwarmEvents([])
     setStreamLatency(null)
 
     const isDemoMode = engineMode === 'demo'
+    const isEduMode = engineMode === 'edu'
     setStreamMode(isDemoMode ? 'demo' : 'production')
 
     const formData = new FormData()
     formData.append('xray_image', file)
 
     try {
+      const modeParam = isEduMode ? '&mode=edu' : ''
       const response = await fetch(
-        `${API_BASE}/api/analyze-scan/stream?demo=${isDemoMode}`,
+        `${API_BASE}/api/analyze-scan/stream?demo=${isDemoMode}${modeParam}`,
         { method: 'POST', body: formData, signal: controller.signal }
       )
 
@@ -226,9 +229,7 @@ export default function Dashboard() {
         buffer += chunk
         bufferBytes += chunk.length
 
-        // Guard against unbounded buffer growth (CVE-style memory exhaustion)
         if (bufferBytes > MAX_SSE_BUFFER_BYTES) {
-          // Force-flush: process what we have, then discard oldest half
           const frames = buffer.split('\n\n')
           buffer = frames.pop() || ''
           bufferBytes = buffer.length
@@ -263,9 +264,8 @@ export default function Dashboard() {
           continue
         }
 
-        // Parse SSE frames
         const frames = buffer.split('\n\n')
-        buffer = frames.pop() // keep incomplete last frame
+        buffer = frames.pop()
         bufferBytes = buffer.length
 
         for (const frame of frames) {
@@ -297,7 +297,6 @@ export default function Dashboard() {
         }
       }
     } catch (err) {
-      // Ignore aborted requests (user navigated away or cleared)
       if (err.name === 'AbortError') return
       setError(err.message || 'Failed to connect to AI swarm endpoint.')
     } finally {
@@ -306,7 +305,7 @@ export default function Dashboard() {
     }
   }, [file, engineMode])
 
-  // Keyboard shortcuts: Ctrl+Enter → analyze, Escape → clear
+  // Keyboard shortcuts
   useEffect(() => {
     const handler = (e) => {
       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
@@ -318,10 +317,7 @@ export default function Dashboard() {
     return () => window.removeEventListener('keydown', handler)
   }, [file, isLoading, results, engineMode, fileSizeError, analyzeScan])
 
-  // Abort any in-flight SSE stream on real unmount only.
-  // (Was previously bundled with the keyboard-shortcut effect, whose
-  // cleanup re-ran on every isLoading flip — aborting the fetch ~28ms
-  // after it started, before the server could respond.)
+  // Abort on unmount
   useEffect(() => {
     return () => {
       if (abortRef.current) {
@@ -331,13 +327,56 @@ export default function Dashboard() {
     }
   }, [])
 
-  const requestHint = () => {
+  // ─── Education Mode: Request Hint from API ───
+  const requestHint = useCallback(async () => {
+    if (!results?._imageHash) return
     setIsHintLoading(true)
-    setTimeout(() => {
+    try {
+      const resp = await fetch(`${API_BASE}/api/analyze-scan/hint`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageHash: results._imageHash }),
+      })
+      const json = await resp.json()
+      if (json.status === 'success') {
+        setHint(json.data.hint_question)
+      } else {
+        setHint('Critic Node Nudge: Focus your attention on structural asymmetries in the medial zones.')
+      }
+    } catch (err) {
+      console.error('Hint request failed:', err)
       setHint('Critic Node Nudge: Focus your attention on structural asymmetries in the medial zones.')
+    } finally {
       setIsHintLoading(false)
-    }, 1500)
-  }
+    }
+  }, [results])
+
+  // ─── Education Mode: Reveal Analysis from API ───
+  const handleReveal = useCallback(async () => {
+    if (!results?._imageHash || !residentInput.trim()) return
+    try {
+      const resp = await fetch(`${API_BASE}/api/analyze-scan/reveal`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageHash: results._imageHash,
+          residentAssessment: residentInput,
+        }),
+      })
+      const json = await resp.json()
+      if (json.status === 'success') {
+        setResults(prev => ({
+          ...prev,
+          verified_report: json.data.verified_report,
+          diagnosis_match: json.data.diagnosis_match,
+        }))
+        setDiagnosisMatch(json.data.diagnosis_match)
+        setIsRevealed(true)
+      }
+    } catch (err) {
+      console.error('Reveal failed:', err)
+    }
+  }, [results, residentInput])
 
   // Derive a loading text from the latest swarm event
   const loadingText = (() => {
@@ -357,12 +396,10 @@ export default function Dashboard() {
       <div className="max-w-7xl mx-auto space-y-8">
 
         <header className="flex flex-col md:flex-row items-center justify-between pb-6 border-b border-blue-500/20 gap-4">
-          {/* Left: logo */}
           <div className="flex items-center cursor-pointer shrink-0" onClick={() => navigate('/')}>
             <HyperionLogo horizontal={true} className="h-16 w-auto" />
           </div>
 
-          {/* Right: status + nav + mode selector */}
           <div className="flex flex-wrap items-center justify-end gap-3 w-full md:w-auto">
             <SwarmStatus />
 
@@ -373,11 +410,15 @@ export default function Dashboard() {
               Analytics
             </button>
 
+            {/* Engine Mode Selector */}
             <div className="flex items-center gap-1.5 p-1 bg-[#000]/50 border border-slate-800 rounded-md">
               <button
                 onClick={() => setEngineMode('clinical')}
                 title="Full adversarial consensus loop — up to 3 agent iterations"
-                className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-inter font-semibold tracking-widest uppercase transition-all duration-300 ${engineMode === 'clinical' ? 'bg-[#00D9FF]/10 text-[#00D9FF] border border-[#00D9FF]/30 shadow-[0_0_15px_rgba(0,217,255,0.1)]' : 'text-slate-500 hover:text-white border border-transparent'}`}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-inter font-semibold tracking-widest uppercase transition-all duration-300 ${engineMode === 'clinical'
+                    ? 'bg-[#00D9FF]/10 text-[#00D9FF] border border-[#00D9FF]/30 shadow-[0_0_15px_rgba(0,217,255,0.1)]'
+                    : 'text-slate-500 hover:text-white border border-transparent'
+                  }`}
               >
                 <div className={`w-1.5 h-1.5 rounded-full ${engineMode === 'clinical' ? 'bg-[#00D9FF] shadow-[0_0_8px_rgba(0,217,255,1)]' : 'bg-slate-700'}`} />
                 Deep Clinical
@@ -385,13 +426,29 @@ export default function Dashboard() {
               <button
                 onClick={() => setEngineMode('demo')}
                 title="Single-pass analysis — fast for stage demonstrations"
-                className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-inter font-semibold tracking-widest uppercase transition-all duration-300 ${engineMode === 'demo' ? 'bg-indigo-900/20 text-indigo-400 border border-indigo-500/30' : 'text-slate-500 hover:text-white border border-transparent'}`}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-inter font-semibold tracking-widest uppercase transition-all duration-300 ${engineMode === 'demo'
+                    ? 'bg-indigo-900/20 text-indigo-400 border border-indigo-500/30'
+                    : 'text-slate-500 hover:text-white border border-transparent'
+                  }`}
               >
                 <HUDIcons.GraduationCap /> Fast Demo
               </button>
               <button
+                onClick={() => setEngineMode('edu')}
+                title="Socratic learning mode — hint-based discovery for residents"
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-inter font-semibold tracking-widest uppercase transition-all duration-300 ${engineMode === 'edu'
+                    ? 'bg-indigo-900/20 text-indigo-400 border border-indigo-500/30 shadow-[0_0_15px_rgba(99,102,241,0.2)]'
+                    : 'text-slate-500 hover:text-white border border-transparent'
+                  }`}
+              >
+                <HUDIcons.GraduationCap /> Education
+              </button>
+              <button
                 onClick={() => setEngineMode('batch')}
-                className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-inter font-semibold tracking-widest uppercase transition-all duration-300 ${engineMode === 'batch' ? 'bg-violet-900/20 text-violet-400 border border-violet-500/30' : 'text-slate-500 hover:text-white border border-transparent'}`}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-inter font-semibold tracking-widest uppercase transition-all duration-300 ${engineMode === 'batch'
+                    ? 'bg-violet-900/20 text-violet-400 border border-violet-500/30'
+                    : 'text-slate-500 hover:text-white border border-transparent'
+                  }`}
               >
                 <HUDIcons.Activity /> Batch
               </button>
@@ -476,8 +533,9 @@ export default function Dashboard() {
                 hint={hint}
                 isHintLoading={isHintLoading}
                 onRequestHint={requestHint}
-                onReveal={() => setIsRevealed(true)}
+                onReveal={handleReveal}
                 onDownloadPDF={handleDownloadPDF}
+                diagnosisMatch={diagnosisMatch}
               />
             </div>
           </ErrorBoundary>

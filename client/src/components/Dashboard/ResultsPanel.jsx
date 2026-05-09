@@ -2,23 +2,12 @@ import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import HUDIcons from './HUDIcons'
 import LoadingOverlay from './LoadingOverlay'
-
-function confidenceScore(results) {
-  if (results.partial) return '62%'
-  if (results.critic_interventions === 0) return '98%'
-  return `${Math.max(70, 100 - (results.critic_interventions * 9))}%`
-}
-
-function confidenceTooltip(results) {
-  if (results.partial) return 'Partial pipeline — one or more agents degraded'
-  if (results.critic_interventions === 0) return 'Zero critic interventions — consensus on first pass'
-  return `${results.critic_interventions} critic intervention${results.critic_interventions !== 1 ? 's' : ''} · formula: max(70, 100 − n×9)`
-}
+import { confidenceScore, confidenceTooltip } from '../../utils/formatters'
 
 export default function ResultsPanel({
   results, isLoading, loadingText, isRevealed, engineMode,
   residentInput, onResidentInput, hint, isHintLoading,
-  onRequestHint, onReveal, onDownloadPDF,
+  onRequestHint, onReveal, onDownloadPDF, diagnosisMatch,
 }) {
   const [showComparison, setShowComparison] = useState(false)
 
@@ -44,7 +33,7 @@ export default function ResultsPanel({
               {showComparison ? 'Hide Diff' : 'Before / After'}
             </button>
           )}
-          {engineMode === 'discovery' && results && !isRevealed && (
+          {engineMode === 'edu' && results && !isRevealed && (
             <span className="text-[10px] font-inter font-bold tracking-widest uppercase text-indigo-400 border border-indigo-500/30 px-3 py-1 rounded-full bg-indigo-950/30 shadow-[0_0_10px_rgba(99,102,241,0.2)] animate-pulse">
               Discovery Mode Active
             </span>
@@ -80,8 +69,9 @@ export default function ResultsPanel({
         {results && !isLoading && (
           <div className="p-8 h-full flex flex-col gap-8 animate-[fadeIn_0.5s_ease-out] overflow-y-auto relative z-0">
 
+            {/* ─── Education Mode: Discovery Overlay ─── */}
             <AnimatePresence>
-              {engineMode === 'discovery' && !isRevealed && (
+              {engineMode === 'edu' && !isRevealed && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -136,7 +126,7 @@ export default function ResultsPanel({
               )}
             </AnimatePresence>
 
-            <div className={`space-y-8 flex-1 transition-all duration-700 ${engineMode === 'discovery' && !isRevealed ? 'blur-xl opacity-20 pointer-events-none select-none' : ''}`}>
+            <div className={`space-y-8 flex-1 transition-all duration-700 ${engineMode === 'edu' && !isRevealed ? 'blur-xl opacity-20 pointer-events-none select-none' : ''}`}>
 
               {/* Top Status Badges */}
               <div className="flex flex-wrap items-center gap-4">
@@ -163,26 +153,16 @@ export default function ResultsPanel({
 
               {/* Vision Agent Raw Geometry */}
               <div className="space-y-4">
-                {/* <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(34,211,238,0.8)]"></div>
-                  Vision Agent Raw Geometry
-                </h4> */}
                 <div className="p-6 rounded-lg border border-cyan-500/20 bg-[#0f2341]/80 shadow-[inset_0_0_30px_rgba(0,0,0,0.3)]">
-                  <div className="absolute top-0 left-0 w-1 h-full bg-cyan-500/30"></div>
+                  <div className="absolute top-0 left-0 w-1 h-full bg-cyan-500/30" />
                   <h3 className="text-sm font-bold text-white mb-4">Vision Agent Raw Geometry</h3>
                   <p className="font-light text-sm text-slate-400">{results.raw_findings}</p>
                 </div>
               </div>
 
-              {/* Final Verified Consensus / Clinical Findings */}
+              {/* Final Verified Consensus */}
               <div className="space-y-4">
-                {/* <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(52,211,153,0.8)]"></div>
-                  Final Verified Consensus
-                </h4> */}
-
                 <div className="p-6 rounded-lg border border-cyan-500/20 bg-[#0f2341]/80 shadow-[inset_0_0_30px_rgba(0,0,0,0.3)]">
-                  {/* Summary and Recommendations */}
                   <div className="mb-8">
                     <h3 className="text-sm font-bold text-white mb-4">Summary</h3>
                     {(() => {
@@ -190,7 +170,6 @@ export default function ResultsPanel({
                       let summary = "";
                       let recommendations = [];
 
-                      // Match numbered sections safely
                       const sections = {};
                       const regex = /\((\d)\)\s*([\s\S]*?)(?=\(\d\)\s|$)/g;
 
@@ -199,49 +178,39 @@ export default function ResultsPanel({
                         sections[match[1]] = match[2].trim();
                       }
 
-                      // ===== SUMMARY =====
                       const summaryParts = [];
 
-                      // Section 1
                       if (sections["1"]) {
                         const clean1 = sections["1"]
                           .replace(/^(Summary of Findings|Summary)\s*[:\-]?\s*/i, "")
                           .replace(/\s+/g, " ")
                           .trim();
-
                         summaryParts.push(clean1);
                       }
 
-                      // Section 2
                       if (sections["2"]) {
                         const clean2 = sections["2"]
                           .replace(/^(Differential Diagnosis|Differential)\s*[:\-]?\s*/i, "")
-                          // Remove numbered diagnosis bullets
                           .replace(/\d+\.\s*/g, "")
-                          // Remove extra dashes
                           .replace(/\s+—\s+/g, " — ")
-                          // Flatten whitespace
                           .replace(/\n/g, " ")
                           .replace(/\s+/g, " ")
                           .trim();
-
                         summaryParts.push(clean2);
                       }
 
                       if (summaryParts.length > 0) {
                         summary = summaryParts.join(" ");
                       } else {
-                        // Fallback: If no numbered sections, try to split by common recommendation headers
                         const splitText = text.split(/(?:Recommendations|Workup|Action[s]?|Plan)\s*:/i);
                         if (splitText.length > 1) {
                           summary = splitText[0].replace(/\*\*Summary.*?\*\*/i, "").trim();
-                          sections["3"] = splitText[1]; // Feed into recommendations parser below
+                          sections["3"] = splitText[1];
                         } else {
                           summary = text.trim();
                         }
                       }
 
-                      // ===== RECOMMENDATIONS =====
                       const recText = [sections["3"], sections["4"]]
                         .filter(Boolean)
                         .join("\n");
@@ -272,18 +241,11 @@ export default function ResultsPanel({
 
                           {recommendations.length > 0 && (
                             <>
-                              <div className="h-px w-full bg-slate-800/50 mb-6"></div>
-
-                              <h3 className="text-sm font-bold text-white mb-4">
-                                Recommendations
-                              </h3>
-
+                              <div className="h-px w-full bg-slate-800/50 mb-6" />
+                              <h3 className="text-sm font-bold text-white mb-4">Recommendations</h3>
                               <div className="space-y-2">
                                 {recommendations.map((item, i) => (
-                                  <p
-                                    key={i}
-                                    className="text-slate-300 text-sm leading-relaxed"
-                                  >
+                                  <p key={i} className="text-slate-300 text-sm leading-relaxed">
                                     <span className="text-slate-400 mr-2">•</span>
                                     {item}
                                   </p>
@@ -296,7 +258,7 @@ export default function ResultsPanel({
                     })()}
                   </div>
 
-                  {/* Badges at the bottom of findings box */}
+                  {/* Badges */}
                   <div className="flex flex-wrap items-center gap-3 pt-6 border-t border-slate-800/50">
                     <div className="px-4 py-1.5 rounded-md border border-cyan-500/30 bg-cyan-500/5 text-cyan-400 text-[10px] font-medium">
                       Confidence: <span className="font-bold">{confidenceScore(results)}</span>
@@ -311,6 +273,73 @@ export default function ResultsPanel({
                 </div>
               </div>
 
+              {/* ─── Education Mode: Diagnosis Match Scorecard ─── */}
+              {isRevealed && diagnosisMatch && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, ease: 'easeOut' }}
+                  className="p-6 rounded-xl border border-indigo-500/30 bg-indigo-950/20"
+                >
+                  <h3 className="text-sm font-bold text-white mb-4">Diagnosis Match Score</h3>
+                  <div className="flex flex-col md:flex-row items-start gap-6">
+                    {/* Score Gauge */}
+                    <div className="relative w-24 h-24 shrink-0">
+                      <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(99,102,241,0.15)" strokeWidth="8" />
+                        <motion.circle
+                          cx="50" cy="50" r="42"
+                          fill="none" stroke="url(#eduGaugeGradient)"
+                          strokeWidth="8"
+                          strokeLinecap="round"
+                          strokeDasharray={`${2 * Math.PI * 42}`}
+                          initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
+                          animate={{
+                            strokeDashoffset: 2 * Math.PI * 42 * (1 - (diagnosisMatch.score || 0) / 100),
+                          }}
+                          transition={{ duration: 1.5, ease: 'easeOut' }}
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-2xl font-bold text-indigo-400 font-inter">
+                          {diagnosisMatch.score || 0}%
+                        </span>
+                      </div>
+                      <defs>
+                        <linearGradient id="eduGaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#818cf8" />
+                          <stop offset="100%" stopColor="#6366f1" />
+                        </linearGradient>
+                      </defs>
+                    </div>
+
+                    {/* Score Breakdown */}
+                    <div className="space-y-3 flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-slate-400 font-mono">Keywords Matched</span>
+                        <span className="text-sm font-bold text-emerald-400">{diagnosisMatch.matched || 0}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-slate-400 font-mono">Keywords Missed</span>
+                        <span className="text-sm font-bold text-red-400">{diagnosisMatch.missed || 0}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-slate-400 font-mono">Extra Keywords</span>
+                        <span className="text-sm font-bold text-amber-400">{diagnosisMatch.extra || 0}</span>
+                      </div>
+                      <div className="pt-2 border-t border-indigo-500/20 flex items-center justify-between">
+                        <span className="text-xs text-slate-400 font-mono">Total AI Keywords</span>
+                        <span className="text-sm font-bold text-cyan-400">{diagnosisMatch.total_ai_keywords || 0}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-slate-400 font-mono">Your Keywords</span>
+                        <span className="text-sm font-bold text-cyan-400">{diagnosisMatch.total_resident_keywords || 0}</span>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
               {/* Before/After Comparison */}
               <AnimatePresence>
                 {showComparison && hasDiff && (
@@ -321,7 +350,7 @@ export default function ResultsPanel({
                     className="space-y-3 overflow-hidden"
                   >
                     <h4 className="text-[10px] font-bold text-amber-500 uppercase tracking-widest flex items-center gap-2">
-                      <div className="w-1 h-1 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)]"></div>
+                      <div className="w-1 h-1 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)]" />
                       Initial Draft (Pre-Critic)
                     </h4>
                     <div className="p-4 rounded-md bg-amber-950/10 border border-amber-500/20 text-slate-400 font-medium text-sm leading-relaxed relative overflow-hidden">
@@ -332,7 +361,7 @@ export default function ResultsPanel({
                 )}
               </AnimatePresence>
 
-              {/* Action Buttons at bottom of panel */}
+              {/* Action Buttons */}
               <div className="pt-4 flex items-center gap-4">
                 <button
                   onClick={() => { }}

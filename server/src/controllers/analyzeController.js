@@ -9,6 +9,9 @@ const ScanResult = require('../models/ScanResult')
 const { runVisionAgent } = require('../services/visionAgent')
 const { runDrafterAgent } = require('../services/drafterAgent')
 const { runCriticAgent, criticRejected } = require('../services/criticAgent')
+const { runSocraticCritic } = require('../services/socraticCriticAgent')
+const eduSessionCache = require('../utils/eduSessionCache')
+const { calculateDiagnosisMatch } = require('../utils/diagnosisMatch')
 const { PROMPT_VERSION } = require('../prompts')
 
 // Demo Mode: 1 iteration, no revision loop, <45s target
@@ -23,19 +26,25 @@ function isViable(text) {
   return typeof text === 'string' && text.trim().length >= MIN_VIABLE_CHARS
 }
 
+function resolveMode(req) {
+  const raw = (req.body && req.body.mode) || (req.query && req.query.mode) || 'clinical'
+  return raw === 'edu' ? 'edu' : 'clinical'
+}
+
 async function analyzeScan(req, res, next) {
   const requestId = req.id || crypto.randomUUID()
   const log = logger.child({ requestId })
   const t0 = Date.now()
   const demoMode = isDemoMode(req)
+  const mode = resolveMode(req)
 
-  log.info({ demoMode }, 'Pipeline starting')
+  log.info({ demoMode, mode }, 'Pipeline starting')
 
   const imageBuffer = req.file.buffer
   const imageHash = crypto.createHash('sha256').update(imageBuffer).digest('hex')
 
-  // Cache hit
-  if (isMongoConnected()) {
+  // Cache hit (clinical/demo only — edu always re-runs to produce a fresh hint)
+  if (mode === 'clinical' && isMongoConnected()) {
     try {
       const cached = await ScanResult.findOne({ imageHash, promptVersion: PROMPT_VERSION }).lean()
       if (cached) {
@@ -66,7 +75,7 @@ async function analyzeScan(req, res, next) {
   let pipelineResult
   try {
     pipelineResult = await Promise.race([
-      runPipeline(imageBuffer, imageHash, requestId, log, demoMode),
+      runPipeline(imageBuffer, imageHash, requestId, log, demoMode, () => {}, mode),
       new Promise((_, reject) =>
         setTimeout(
           () => reject(Object.assign(new Error('Pipeline timeout'), { status: 504 })),
@@ -77,7 +86,16 @@ async function analyzeScan(req, res, next) {
   } catch (err) {
     // Graceful degression: timeout or unrecoverable error → partial analysis
     if (err.status === 504 || err.message === 'Pipeline timeout') {
-      log.warn({ requestId }, 'Pipeline timeout — returning partial analysis')
+      log.warn({ requestId, mode }, 'Pipeline timeout')
+      if (mode === 'edu') {
+        return res.status(504).json({
+          status: 'error',
+          message: 'Edu pipeline timed out before a Socratic hint could be generated. Please retry.',
+          processing_latency: `${((Date.now() - t0) / 1000).toFixed(2)}s`,
+          requestId,
+          mode,
+        })
+      }
       return res.status(206).json({
         status: 'partial',
         message: 'Analysis timed out. Partial results returned.',
@@ -98,7 +116,32 @@ async function analyzeScan(req, res, next) {
 
   const elapsed = ((Date.now() - t0) / 1000).toFixed(2)
 
-  // Persist
+  // Edu mode — short-circuited response with Socratic hint and session cache for /reveal
+  if (mode === 'edu') {
+    eduSessionCache.set(imageHash, {
+      imageBuffer,
+      rawFindings: pipelineResult.rawFindings,
+      socraticHint: pipelineResult.socraticHint,
+    })
+
+    log.info({ elapsed: `${elapsed}s`, partial: pipelineResult.partial }, 'Edu pipeline complete')
+
+    return res.status(pipelineResult.partial ? 206 : 200).json({
+      status: pipelineResult.partial ? 'partial' : 'success',
+      data: {
+        raw_findings: pipelineResult.rawFindings,
+        socratic_hint: pipelineResult.socraticHint,
+        image_hash: imageHash,
+        agent_timings: pipelineResult.agentTimings,
+        partial: pipelineResult.partial,
+      },
+      processing_latency: `${elapsed}s`,
+      requestId,
+      mode: 'edu',
+    })
+  }
+
+  // Persist (clinical/demo)
   if (isMongoConnected()) {
     ScanResult.create({
       imageHash,
@@ -139,7 +182,7 @@ async function analyzeScan(req, res, next) {
   })
 }
 
-async function runPipeline(imageBuffer, imageHash, requestId, log, demoMode, emit = () => { }) {
+async function runPipeline(imageBuffer, imageHash, requestId, log, demoMode, emit = () => { }, mode = 'clinical') {
   const maxIterations = demoMode ? DEMO_MAX_ITERATIONS : PROD_MAX_ITERATIONS
   let partial = false
   const agentTimings = {}
@@ -160,6 +203,40 @@ async function runPipeline(imageBuffer, imageHash, requestId, log, demoMode, emi
     agentTimings.vision = 'failed'
     partial = true
     emit('agent_failed', { agent: 'vision', error: err.message })
+  }
+
+  // Edu short-circuit: skip the adversarial loop, run only the Socratic critic
+  if (mode === 'edu') {
+    log.info({ mode }, 'Edu mode — running Socratic critic, skipping drafter + adversarial loop')
+    emit('agent_start', { agent: 'critic', label: 'Socratic Critic', detail: 'Generating pedagogical nudge...' })
+    let socraticHint
+    try {
+      const t = Date.now()
+      socraticHint = await runSocraticCritic(rawFindings, requestId)
+      agentTimings.socratic = `${((Date.now() - t) / 1000).toFixed(2)}s`
+      emit('socratic_hint', {
+        agent: 'critic',
+        elapsed: agentTimings.socratic,
+        hint_question: socraticHint.hintQuestion,
+        clinical_context: socraticHint.clinicalContext,
+        focus_anatomy: socraticHint.focusAnatomy,
+        difficulty: socraticHint.difficulty,
+        key_finding: socraticHint.keyFinding,
+      })
+    } catch (err) {
+      log.warn({ err: err.message }, 'Socratic critic failed — returning fallback hint')
+      socraticHint = {
+        hintQuestion: 'What stands out to you in this image, and what is its clinical significance?',
+        clinicalContext: '',
+        focusAnatomy: '',
+        difficulty: 'intermediate',
+        keyFinding: '',
+      }
+      agentTimings.socratic = 'failed'
+      partial = true
+      emit('agent_failed', { agent: 'critic', error: err.message })
+    }
+    return { rawFindings, socraticHint, mode, partial, agentTimings }
   }
 
   // Stage 2: Initial draft
@@ -268,4 +345,94 @@ async function runPipeline(imageBuffer, imageHash, requestId, log, demoMode, emi
   return { rawFindings, initialDraft, verifiedReport, urgencyFlag, recommendedDept, totalInterventions, partial, agentTimings }
 }
 
-module.exports = { analyzeScan, runPipeline }
+async function revealAnalysis(req, res, next) {
+  const requestId = req.id || crypto.randomUUID()
+  const log = logger.child({ requestId, reveal: true })
+  const t0 = Date.now()
+
+  const imageHash = req.body.image_hash
+  const residentAssessment = typeof req.body.resident_assessment === 'string'
+    ? req.body.resident_assessment.trim()
+    : ''
+  const demoMode = isDemoMode(req)
+
+  const cached = eduSessionCache.get(imageHash)
+  if (!cached) {
+    log.warn({ imageHash }, 'Reveal — edu session not found or expired')
+    return res.status(404).json({
+      status: 'error',
+      message: 'Edu session not found or expired. Please re-upload the scan in Discovery Mode.',
+      requestId,
+    })
+  }
+
+  log.info({ hasAssessment: residentAssessment.length > 0, demoMode }, 'Reveal — running clinical pipeline')
+
+  let pipelineResult
+  try {
+    pipelineResult = await Promise.race([
+      runPipeline(cached.imageBuffer, imageHash, requestId, log, demoMode, () => {}, 'clinical'),
+      new Promise((_, reject) =>
+        setTimeout(
+          () => reject(Object.assign(new Error('Reveal pipeline timeout'), { status: 504 })),
+          CONFIG.pipelineTimeoutMs
+        )
+      ),
+    ])
+  } catch (err) {
+    if (err.status === 504 || /timeout/i.test(err.message)) {
+      log.warn('Reveal pipeline timeout')
+      return res.status(504).json({
+        status: 'error',
+        message: 'Full pipeline timed out during reveal. Please retry.',
+        requestId,
+      })
+    }
+    return next(err)
+  }
+
+  const elapsed = ((Date.now() - t0) / 1000).toFixed(2)
+  const diagnosisMatch = residentAssessment
+    ? calculateDiagnosisMatch(residentAssessment, pipelineResult.verifiedReport)
+    : null
+
+  if (isMongoConnected()) {
+    ScanResult.create({
+      imageHash,
+      promptVersion: PROMPT_VERSION,
+      rawFindings: pipelineResult.rawFindings,
+      initialDraft: pipelineResult.initialDraft,
+      verifiedReport: pipelineResult.verifiedReport,
+      urgencyFlag: pipelineResult.urgencyFlag,
+      recommendedDept: pipelineResult.recommendedDept,
+      criticInterventions: pipelineResult.totalInterventions,
+      partial: pipelineResult.partial,
+      processingLatency: `${elapsed}s`,
+    }).catch(err => log.warn({ err: err.message }, 'Failed to persist reveal result'))
+  }
+
+  log.info({ elapsed: `${elapsed}s`, score: diagnosisMatch && diagnosisMatch.score }, 'Reveal complete')
+
+  res.status(pipelineResult.partial ? 206 : 200).json({
+    status: pipelineResult.partial ? 'partial' : 'success',
+    data: {
+      raw_findings: pipelineResult.rawFindings,
+      initial_draft: pipelineResult.initialDraft,
+      verified_report: pipelineResult.verifiedReport,
+      urgency_flag: pipelineResult.urgencyFlag,
+      recommended_dept: pipelineResult.recommendedDept,
+      critic_interventions: pipelineResult.totalInterventions,
+      agent_timings: pipelineResult.agentTimings,
+      partial: pipelineResult.partial,
+      socratic_hint: cached.socraticHint,
+      resident_assessment: residentAssessment,
+      diagnosis_match: diagnosisMatch,
+      image_hash: imageHash,
+    },
+    processing_latency: `${elapsed}s`,
+    requestId,
+    mode: 'edu-reveal',
+  })
+}
+
+module.exports = { analyzeScan, runPipeline, revealAnalysis }
