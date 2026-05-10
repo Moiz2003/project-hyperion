@@ -549,6 +549,13 @@ export default function Dashboard() {
             <SwarmStatus />
 
             <button
+              onClick={() => window.open('https://youtu.be/xv2K820VY6c', '_blank')}
+              className="text-[10px] font-bold tracking-widest uppercase text-white transition-all bg-gradient-to-r from-cyan-400 to-blue-500 px-4 py-2 rounded-md hover:shadow-[0_0_15px_rgba(34,211,238,0.4)] hover:scale-105 active:scale-95"
+            >
+              Youtube Demo
+            </button>
+
+            <button
               onClick={() => navigate('/analytics')}
               className="text-[10px] font-bold tracking-widest uppercase text-white transition-colors bg-[#000]/30 border border-slate-800 px-4 py-2 rounded-md hover:border-cyan-400/50"
             >
