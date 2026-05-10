@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import HUDIcons from './HUDIcons'
 
@@ -7,18 +7,39 @@ export default function UploadZone({
   onFileSelect, onDragOver, onDragLeave, onDrop, onClear, onAnalyze, onLoadDemo,
 }) {
   const fileInputRef = useRef(null)
+  const [brightness, setBrightness] = useState(100)
+  const [contrast, setContrast] = useState(100)
+  const [invert, setInvert] = useState(false)
+
+  const resetFilters = () => {
+    setBrightness(100)
+    setContrast(100)
+    setInvert(false)
+  }
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center gap-3 mb-2">
-        <HUDIcons.Laptop />
-        <h2 className="text-sm font-inter font-semibold tracking-widest uppercase text-slate-300">Input Source</h2>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-3">
+          <HUDIcons.Laptop />
+          <h2 className="text-sm font-inter font-semibold tracking-widest uppercase text-slate-300">Input Source</h2>
+        </div>
+        {previewUrl && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={resetFilters}
+              className="text-[9px] font-bold tracking-widest uppercase px-3 py-1.5 rounded bg-slate-900 border border-slate-800 text-white hover:text-slate-300 transition-colors"
+            >
+              Reset Filters
+            </button>
+          </div>
+        )}
       </div>
 
       <div
         className={`relative flex flex-col items-center justify-center w-full aspect-[4/3] min-h-[450px] max-h-[800px] border rounded-lg transition-all duration-500 overflow-hidden backdrop-blur-xl shadow-2xl
           ${isDragging ? 'bg-[#0f2341]/40 border-cyan-500/50 shadow-[0_0_30px_rgba(34,211,238,0.2)]' : 'bg-[#0f2341]/20 border-cyan-500/10 hover:bg-[#0f2341]/40 hover:border-cyan-500/30 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]'}
-          ${previewUrl ? 'p-2 bg-slate-950' : 'p-8'}
+          ${previewUrl ? 'p-2 bg-black' : 'p-8'}
         `}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
@@ -29,39 +50,60 @@ export default function UploadZone({
         )}
 
         {previewUrl ? (
-          <div className="relative w-full h-full group bg-black rounded overflow-hidden">
-            <img src={previewUrl} alt="Scan Preview" className="w-full h-full object-contain" />
-
-            {isLoading && (
-              <motion.div
-                initial={{ top: '0%' }}
-                animate={{ top: ['0%', '100%', '0%'] }}
-                transition={{ duration: 4, ease: 'easeInOut', repeat: Infinity }}
-                className="absolute left-0 w-full h-1 bg-cyan-400  z-10"
+          <div className="relative w-full h-full group bg-black rounded overflow-hidden flex flex-col">
+            <div className="flex-1 relative overflow-hidden flex items-center justify-center bg-black">
+              <img
+                src={previewUrl}
+                alt="Scan Preview"
+                className="max-w-full max-h-full object-contain transition-all duration-300"
+                style={{
+                  filter: `brightness(${brightness}%) contrast(${contrast}%) ${invert ? 'invert(1)' : ''}`,
+                }}
               />
-            )}
 
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6">
+              {isLoading && (
+                <motion.div
+                  initial={{ top: '0%' }}
+                  animate={{ top: ['0%', '100%', '0%'] }}
+                  transition={{ duration: 4, ease: 'easeInOut', repeat: Infinity }}
+                  className="absolute left-0 w-full h-1 bg-cyan-400 z-10"
+                />
+              )}
+            </div>
+
+            {/* Imaging Toolbar */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-4 px-6 py-3 rounded-full bg-slate-950/80 backdrop-blur-xl border border-slate-800 shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity z-20">
+              <div className="flex flex-col gap-1 min-w-[80px]">
+                <span className="text-[8px] font-bold text-slate-500 uppercase tracking-tighter">Brightness</span>
+                <input
+                  type="range" min="50" max="200" value={brightness}
+                  onChange={(e) => setBrightness(e.target.value)}
+                  className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+                />
+              </div>
+              <div className="flex flex-col gap-1 min-w-[80px]">
+                <span className="text-[8px] font-bold text-slate-500 uppercase tracking-tighter">Contrast</span>
+                <input
+                  type="range" min="50" max="200" value={contrast}
+                  onChange={(e) => setContrast(e.target.value)}
+                  className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+                />
+              </div>
+              <button
+                onClick={() => setInvert(!invert)}
+                className={`p-2 rounded-lg border transition-all ${invert ? 'bg-cyan-400 text-slate-950 border-cyan-400' : 'bg-slate-900 text-slate-400 border-slate-700 hover:text-white'}`}
+                title="Invert Colors"
+              >
+                <HUDIcons.Activity className="w-4 h-4" />
+              </button>
+              <div className="w-px h-6 bg-slate-800 mx-1" />
               <button
                 onClick={onClear}
-                className="absolute top-6 right-6 p-2 border-none rounded-full text-white-400 hover:text-white hover:bg-red-500 transition-colors shadow-lg"
+                className="p-2 rounded-lg bg-red-900/20 text-red-400 border border-red-900/30 hover:bg-red-500 hover:text-white transition-all"
+                title="Clear Scan"
               >
-                <HUDIcons.Close />
+                <HUDIcons.Close className="w-4 h-4" />
               </button>
-              <div className="flex items-center gap-3 text-sm bg-slate-900/80 backdrop-blur-md p-3 rounded-xl border border-slate-800 w-max">
-                <HUDIcons.File />
-                <div className="flex flex-col">
-                  <span className="font-medium text-white truncate max-w-[200px]">
-                    patient-scan-{btoa(file.name + file.size).replace(/[^a-zA-Z0-9]/g, '').substring(0, 8).toLowerCase()}.jpeg
-                  </span>
-                  <span className="text-[10px] text-slate-500 font-inter">Original: {file.name}</span>
-                </div>
-                <span className="text-slate-500 font-inter ml-4">
-                  {file.size < 1024 * 1024
-                    ? (file.size / 1024).toFixed(2) + ' KB'
-                    : (file.size / (1024 * 1024)).toFixed(2) + ' MB'}
-                </span>
-              </div>
             </div>
           </div>
         ) : (
@@ -108,16 +150,16 @@ export default function UploadZone({
       <button
         onClick={onAnalyze}
         disabled={!file || isLoading || fileSizeError}
-        className={`relative w-full py-4 rounded-lg font-inter font-bold text-xs tracking-widest uppercase flex items-center justify-center gap-4 transition-all duration-500 overflow-hidden cursor-pointer shadow-lg
+        className={`relative w-full py-4 rounded-lg font-inter font-bold text-xs tracking-widest uppercase flex items-center justify-center gap-4 transition-all duration-500 overflow-hidden cursor-pointer
           ${!file || isLoading || fileSizeError
             ? 'bg-slate-900 border border-slate-800 text-slate-600 cursor-not-allowed opacity-50'
-            : 'bg-gradient-to-r from-cyan-400 to-blue-500 text-[#0a1628] hover:opacity-90 hover:shadow-[0_0_30px_rgba(0,217,255,0.2)]'
+            : 'bg-gradient-to-r from-cyan-400 to-blue-500 text-white hover:opacity-90'
           }
         `}
       >
         {isLoading ? (
           <>
-            <div className="w-4 h-4 border-2 border-[#0a1628] border-t-transparent rounded-full animate-spin" />
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
             Processing...
           </>
         ) : (

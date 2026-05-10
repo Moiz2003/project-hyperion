@@ -111,7 +111,7 @@ export const Footer = ({ onNavigate }) => {
             &copy; {new Date().getFullYear()} Project Hyperion. All rights reserved.
           </p>
           <p className="text-xs text-slate-700 font-inter">
-            Powered by AMD MI300X &middot; Zero data transit &middot; Air-gapped by design
+            Powered by AMD MI300X
           </p>
         </div>
       </div>

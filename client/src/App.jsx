@@ -8,7 +8,6 @@ import { PageSkeleton } from './components/ui/Skeleton'
 import { ToastProvider } from './components/ui/Toast'
 
 // Lazy-loaded pages for code splitting
-const SplashScreen = lazy(() => import('./SplashScreen'))
 const LandingPage = lazy(() => import('./LandingPage'))
 const PricingPage = lazy(() => import('./PricingPage'))
 const DocumentPage = lazy(() => import('./DocumentPage'))
@@ -49,20 +48,6 @@ function SuspenseWrapper({ children }) {
 
 function RootRoute() {
   const onNavigate = useViewNavigate()
-  const hasSeen = sessionStorage.getItem('hasSeenSplash')
-
-  if (!hasSeen) {
-    return (
-      <SuspenseWrapper>
-        <SplashScreen
-          onComplete={() => {
-            sessionStorage.setItem('hasSeenSplash', 'true')
-            onNavigate('landing')
-          }}
-        />
-      </SuspenseWrapper>
-    )
-  }
   return (
     <PageTransition keyProp="landing">
       <SuspenseWrapper>

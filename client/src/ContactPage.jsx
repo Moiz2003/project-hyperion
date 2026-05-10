@@ -71,7 +71,7 @@ export default function ContactPage({ onNavigate }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a1628] text-slate-50 font-inter selection:bg-cyan-500/30 relative overflow-x-hidden flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 text-slate-50 font-inter selection:bg-cyan-500/30 relative overflow-x-hidden flex flex-col">
       <Starfield />
 
       <Header onNavigate={onNavigate} />
@@ -88,7 +88,7 @@ export default function ContactPage({ onNavigate }) {
           <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 blur-[100px] pointer-events-none rounded-full" />
 
           <div className="mb-12 border-b border-slate-800 pb-12 relative z-10">
-            <h2 className="text-xs font-bold tracking-widest text-cyan-400 uppercase mb-4">Get in Touch</h2>
+            {/* <h2 className="text-xs font-bold tracking-widest text-cyan-400 uppercase mb-4">Get in Touch</h2> */}
             <h1 className="text-4xl md:text-6xl font-bold text-white tracking-tighter leading-tight">
               Contact Us
             </h1>

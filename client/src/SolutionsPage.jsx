@@ -29,7 +29,7 @@ const SolutionsPage = ({ onNavigate }) => {
   }, []);
 
   return (
-    <div className="hyperion-solutions-page bg-[#0a1628] min-h-screen">
+    <div className="hyperion-solutions-page bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 min-h-screen text-slate-50">
       <Header onNavigate={onNavigate} />
 
       <main>
@@ -418,7 +418,7 @@ const SolutionsPage = ({ onNavigate }) => {
         </section>
 
         {/* CTA Section */}
-        <section className="py-20 bg-[#0a1628] border-t border-blue-500/20">
+        <section className="py-20 bg-transparent border-t border-blue-500/20">
           <div className="flex flex-col gap-2 w-fit mx-auto text-center">
             <h2 className="text-4xl font-bold text-white mb-4">Ready to Transform Your Healthcare Delivery?</h2>
             <p className="text-slate-300 text-lg mb-6">Let's find the right solution for your facility. Schedule a personalized demo with our team to see Hyperion in action.</p>

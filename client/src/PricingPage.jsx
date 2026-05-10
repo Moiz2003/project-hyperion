@@ -118,7 +118,7 @@ const Starfield = () => {
 
 export default function PricingPage({ onNavigate }) {
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-50 font-inter selection:bg-cyan-500/30 relative overflow-x-hidden flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 text-slate-50 font-inter selection:bg-cyan-500/30 relative overflow-x-hidden flex flex-col">
       <Starfield />
 
       <Header onNavigate={onNavigate} />
@@ -167,7 +167,7 @@ export default function PricingPage({ onNavigate }) {
 
           {/* TIER 2: Clinician Pro */}
           <div className="relative transform md:scale-105 z-10">
-            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-cyan-400 to-blue-400 text-slate-950 text-[10px] font-black uppercase tracking-widest px-4 py-1 rounded-full shadow-[0_0_15px_rgba(34,211,238,0.5)] z-20">
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-cyan-400 to-blue-400 text-slate-950 text-[10px] font-black uppercase tracking-widest px-4 py-1 rounded-full z-20">
               Most Popular
             </div>
             <TiltCard highlighted={true}>
@@ -185,7 +185,7 @@ export default function PricingPage({ onNavigate }) {
               </ul>
               <button
                 onClick={() => onNavigate('dashboard')}
-                className="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:shadow-lg hover:shadow-cyan-400/50 text-slate-950 font-inter font-semibold tracking-widest uppercase text-xs transition-all shadow-[0_0_20px_rgba(34,211,238,0.4)]"
+                className="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:shadow-lg hover:shadow-cyan-400/50 text-slate-950 font-inter font-semibold tracking-widest uppercase text-xs text-white"
               >
                 Start Trial
               </button>

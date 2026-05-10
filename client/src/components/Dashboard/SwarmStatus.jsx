@@ -48,7 +48,7 @@ export default function SwarmStatus() {
   return (
     <div className="group relative flex items-center gap-2 cursor-default select-none">
       <div className={`w-2 h-2 rounded-full ${overallColor} ${overallGlow}`} />
-      <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 hidden md:block">
+      <span className={`text-[9px] font-bold uppercase tracking-widest hidden md:block ${allUp ? 'text-emerald-400/90' : anyDown ? 'text-red-400/90' : 'text-slate-400'}`}>
         {allUp ? 'All agents online' : anyDown ? 'Agent degraded' : 'Checking...'}
       </span>
 

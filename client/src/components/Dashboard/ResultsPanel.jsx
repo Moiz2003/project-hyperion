@@ -16,7 +16,7 @@ export default function ResultsPanel({
     results.initial_draft !== results.verified_report
 
   return (
-    <div className="flex flex-col gap-6 relative">
+    <div className="flex flex-col gap-6 relative h-full">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-3">
           <HUDIcons.Clipboard />
@@ -27,8 +27,8 @@ export default function ResultsPanel({
             <button
               onClick={() => setShowComparison(v => !v)}
               className={`text-[10px] font-bold tracking-widest uppercase px-4 py-2 rounded-lg border transition-all ${showComparison
-                ? 'bg-amber-950/40 border-amber-500/50 text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.3)]'
-                : 'bg-slate-900/40 border-slate-800 text-slate-500 hover:text-slate-300 hover:bg-slate-800'
+                ? 'bg-amber-950/40 border-amber-500/50 text-white'
+                : 'bg-slate-900/40 border-slate-800 text-white hover:bg-slate-800'
                 }`}
             >
               {showComparison ? 'Hide Diff' : 'Before / After'}
@@ -42,7 +42,7 @@ export default function ResultsPanel({
         </div>
       </div>
 
-      <div className={`flex-1 relative rounded-lg border transition-colors duration-500 overflow-hidden backdrop-blur-xl shadow-2xl
+      <div className={`relative flex-1 rounded-lg border transition-colors duration-500 backdrop-blur-xl shadow-2xl min-h-[450px]
         ${results ? 'border-cyan-500/20 bg-[#0f2341]/40' : 'border-slate-800 bg-[#000]/20'}
       `}>
         {!isLoading && !results && (
@@ -68,7 +68,7 @@ export default function ResultsPanel({
         )}
 
         {results && !isLoading && (
-          <div className="p-8 h-full flex flex-col gap-8 animate-[fadeIn_0.5s_ease-out] overflow-y-auto relative z-0">
+          <div className="p-8 pr-10 flex flex-col gap-8 animate-[fadeIn_0.5s_ease-out] relative z-0">
 
             {/* ─── Education Mode: Discovery Overlay ─── */}
             <AnimatePresence>
@@ -113,17 +113,17 @@ export default function ResultsPanel({
                     <button
                       onClick={onRequestHint}
                       disabled={isHintLoading || !!hint || isRevealing}
-                      className="px-6 py-4 rounded-lg border border-slate-700 bg-slate-900/40 text-slate-300 font-inter font-bold text-[10px] tracking-widest uppercase hover:bg-slate-800 transition-all disabled:opacity-50"
+                      className="px-6 py-4 rounded-lg border border-slate-700 bg-slate-900/40 text-white font-inter font-bold text-[10px] tracking-widest uppercase hover:bg-slate-800 transition-all disabled:opacity-50"
                     >
                       {isHintLoading ? 'Computing...' : 'Request Hint'}
                     </button>
                     <button
                       onClick={onReveal}
                       disabled={!residentInput.trim() || isRevealing}
-                      className="flex-1 py-4 rounded-lg bg-gradient-to-r from-cyan-400 to-blue-500 text-[#0a1628] font-inter font-bold text-[10px] tracking-widest uppercase hover:opacity-90 hover:shadow-[0_0_30px_rgba(0,217,255,0.2)] transition-all disabled:opacity-50 disabled:bg-slate-800 disabled:text-slate-500 disabled:hover:shadow-none flex items-center justify-center gap-2"
+                      className="flex-1 py-4 rounded-lg bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-inter font-bold text-[10px] tracking-widest uppercase hover:opacity-90 transition-all disabled:opacity-50 disabled:bg-slate-800 disabled:text-slate-500 disabled:hover:shadow-none flex items-center justify-center gap-2"
                     >
                       {isRevealing && (
-                        <span className="inline-block w-3 h-3 border-2 border-[#0a1628]/40 border-t-[#0a1628] rounded-full animate-spin" />
+                        <span className="inline-block w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
                       )}
                       {isRevealing ? 'Verifying — Running Full Swarm…' : 'Verify Findings'}
                     </button>
@@ -140,13 +140,14 @@ export default function ResultsPanel({
 
               {/* Top Status Badges */}
               <div className="flex flex-wrap items-center gap-4">
-                <div className={`px-4 py-1 rounded-full border text-[10px] font-bold tracking-widest uppercase flex items-center gap-2 shadow-lg backdrop-blur-md
+                <div className={`px-4 py-2 rounded-lg border text-[10px] font-black tracking-[0.2em] uppercase flex items-center gap-2 shadow-lg backdrop-blur-md transition-all
                   ${results.urgency_flag === 'High'
-                    ? 'bg-red-950/20 border-red-500/30 text-red-400 py-2 px-6'
+                    ? 'bg-red-500 border-red-400 text-white animate-pulse ring-4 ring-red-500/20'
                     : 'bg-emerald-950/20 border-emerald-500/30 text-emerald-400'
                   }`}
+                  aria-label={`Urgency level: ${results.urgency_flag || 'Low'}`}
                 >
-                  {/* <HUDIcons.Alert /> */}
+                  {results.urgency_flag === 'High' && <HUDIcons.Alert className="w-3 h-3" />}
                   {results.urgency_flag || 'Low'} Urgency
                 </div>
 
@@ -161,20 +162,20 @@ export default function ResultsPanel({
                 </div>
               </div>
 
-              {/* Vision Agent Raw Geometry */}
-              <div className="space-y-4">
-                <div className="p-6 rounded-lg border border-cyan-500/20 bg-[#0f2341]/80 shadow-[inset_0_0_30px_rgba(0,0,0,0.3)]">
-                  <div className="absolute top-0 left-0 w-1 h-full bg-cyan-500/30" />
-                  <h3 className="text-sm font-bold text-white mb-4">Vision Agent Raw Geometry</h3>
-                  <p className="font-light text-sm text-slate-400">{results.raw_findings}</p>
+              <div className="space-y-3">
+                <div className="p-4 rounded-lg border border-cyan-500/10 bg-[#0f2341]/60 shadow-[inset_0_0_20px_rgba(0,0,0,0.2)]">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                    <h3 className="text-[10px] font-bold text-cyan-400/80 uppercase tracking-widest">Vision Agent Geometry</h3>
+                  </div>
+                  <p className="font-normal text-sm text-slate-300 leading-relaxed">{results.raw_findings}</p>
                 </div>
               </div>
 
-              {/* Final Verified Consensus */}
               <div className="space-y-4">
                 <div className="p-6 rounded-lg border border-cyan-500/20 bg-[#0f2341]/80 shadow-[inset_0_0_30px_rgba(0,0,0,0.3)]">
-                  <div className="mb-8">
-                    <h3 className="text-sm font-bold text-white mb-4">Summary</h3>
+                  <div className="mb-4">
+                    <h3 className="text-sm font-bold text-white mb-3">Clinical Summary</h3>
                     {(() => {
                       const text = results.verified_report || "";
                       let summary = "";
@@ -245,7 +246,7 @@ export default function ResultsPanel({
 
                       return (
                         <>
-                          <p className="text-slate-300 text-sm leading-relaxed font-light mb-6">
+                          <p className="text-slate-200 text-sm leading-relaxed font-normal mb-6">
                             {summary}
                           </p>
 
@@ -414,25 +415,32 @@ export default function ResultsPanel({
                   </motion.div>
                 )}
               </AnimatePresence>
-
-              {/* Action Buttons */}
-              <div className="pt-4 flex items-center gap-4">
-                <button
-                  onClick={() => { }}
-                  className="flex-1 py-4 rounded-lg bg-gradient-to-r from-cyan-400 to-blue-500 text-[#0a1628] font-bold text-[10px] tracking-widest uppercase hover:opacity-90 hover:shadow-[0_0_30px_rgba(0,217,255,0.2)] transition-all"
-                >
-                  Save Analysis
-                </button>
-                <button
-                  onClick={onDownloadPDF}
-                  className="flex-1 py-4 rounded-lg bg-slate-900/40 border border-slate-800 text-slate-300 font-bold text-[10px] tracking-widest uppercase hover:bg-slate-800 transition-all"
-                >
-                  Download Report
-                </button>
-              </div>
             </div>
           </div>
         )}
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex items-center gap-4">
+        <button
+          onClick={() => { }}
+          disabled={!results || isLoading}
+          className={`flex-1 py-4 rounded-lg font-bold text-[10px] tracking-widest uppercase transition-all
+            ${!results || isLoading
+              ? 'bg-slate-900 border border-slate-800 text-slate-600 cursor-not-allowed opacity-50'
+              : 'bg-gradient-to-r from-cyan-400 to-blue-500 text-white hover:opacity-90'
+            }`}
+        >
+          Save Analysis
+        </button>
+        <button
+          onClick={onDownloadPDF}
+          disabled={!results || isLoading}
+          className={`flex-1 py-4 rounded-lg bg-slate-900/40 border border-slate-800 text-white font-bold text-[10px] tracking-widest uppercase hover:bg-slate-800 transition-all
+            ${!results || isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+          Download Report
+        </button>
       </div>
     </div>
   )

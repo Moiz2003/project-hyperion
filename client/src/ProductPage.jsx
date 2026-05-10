@@ -20,7 +20,7 @@ const ProductPage = ({ onNavigate }) => {
   };
 
   return (
-    <div className="hyperion-product-page bg-[#0a1628] min-h-screen">
+    <div className="hyperion-product-page bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 min-h-screen text-slate-50">
       <Header onNavigate={onNavigate} />
 
       <main>
@@ -319,7 +319,7 @@ const ProductPage = ({ onNavigate }) => {
         </section>
 
         {/* CTA */}
-        <section className="py-20 bg-[#0a1628] border-t border-blue-500/20">
+        <section className="py-20 bg-transparent border-t border-blue-500/20">
           <div className="flex flex-col gap-2 w-fit mx-auto text-center">
             <h2 className="text-4xl font-bold text-white mb-4">Ready to Deploy Hyperion?</h2>
             <p className="text-slate-300 text-lg mb-6">Start with a free pilot. No credit card required. See Hyperion analyze your patient data in minutes.</p>

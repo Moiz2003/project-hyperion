@@ -57,7 +57,7 @@ export const Header = ({ onNavigate }) => {
             onClick={() => onNavigate('landing')}
             className="flex items-center gap-3 cursor-pointer group"
           >
-            <HyperionLogo horizontal className="h-16 w-auto" />
+            <HyperionLogo horizontal className="h-10 md:h-12 w-auto" />
           </div>
 
           {/* Desktop Nav */}

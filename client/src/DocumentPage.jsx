@@ -93,7 +93,7 @@ const DOC_CONTENT = {
   },
   'documentation': {
     title: 'Platform Documentation',
-    subtitle: 'Deploying the Hyperion Swarm',
+    subtitle: '',
     content: (
       <div className="space-y-8 text-slate-300 leading-relaxed font-medium">
         <p>Hyperion is designed to be completely air-gapped. Deployment requires zero external API keys if running fully local open-weights.</p>
@@ -221,7 +221,7 @@ export default function DocumentPage({ type, onNavigate }) {
   const doc = DOC_CONTENT[type] || DOC_CONTENT['feature-tour'];
 
   return (
-    <div className="min-h-screen bg-[#0a1628] text-slate-50 font-inter selection:bg-cyan-500/30 relative overflow-x-hidden flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 text-slate-50 font-inter selection:bg-cyan-500/30 relative overflow-x-hidden flex flex-col">
       <Starfield />
 
       <Header onNavigate={onNavigate} />

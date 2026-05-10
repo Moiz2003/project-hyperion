@@ -205,7 +205,7 @@ export default function LandingPage({ onNavigate }) {
               <div className="flex flex-col sm:flex-row gap-4 pt-4">
                 <button
                   onClick={() => onNavigate('pricing')}
-                  className="px-8 py-4 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-lg hover:shadow-lg hover:shadow-cyan-400/50 transition-all font-semibold flex items-center justify-center gap-2 text-slate-950 cursor-pointer"
+                  className="px-8 py-4 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-lg hover:opacity-90 transition-all font-semibold flex items-center justify-center gap-2 text-white cursor-pointer"
                 >
                   Start Free Trial <ArrowRight size={20} />
                 </button>

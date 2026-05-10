@@ -41,9 +41,9 @@ export default function LoginPage({ onNavigate }) {
         <section className="max-w-7xl mx-auto px-6 py-16 md:py-24">
           <div className="max-w-md mx-auto">
             <div className="mb-10 text-center">
-              <div className="inline-block px-4 py-2 bg-cyan-400/10 border border-cyan-400/30 rounded-full text-xs tracking-widest uppercase text-cyan-400 font-semibold">
+              {/* <div className="inline-block px-4 py-2 bg-cyan-400/10 border border-cyan-400/30 rounded-full text-xs tracking-widest uppercase text-cyan-400 font-semibold">
                 Secure Access
-              </div>
+              </div> */}
               <h1 className="mt-6 text-4xl md:text-5xl font-bold tracking-tight">
                 Log In
               </h1>

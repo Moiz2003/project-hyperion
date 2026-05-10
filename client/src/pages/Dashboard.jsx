@@ -350,6 +350,18 @@ export default function Dashboard() {
     }
   }, [])
 
+  // ─── Lock body scroll when processing ───
+  useEffect(() => {
+    if (isLoading || isRevealing) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [isLoading, isRevealing])
+
   // ─── Education Mode: Request Hint (zero-latency, from SSE cache) ───
   const requestHint = useCallback(() => {
     setIsHintLoading(true)
@@ -525,8 +537,8 @@ export default function Dashboard() {
   const showVisualizer = isLoading || swarmEvents.length > 0
 
   return (
-    <div className="min-h-screen bg-[#0a1628] text-slate-200 font-inter p-6 selection:bg-cyan-500/30">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 text-slate-200 font-inter flex flex-col selection:bg-cyan-500/30 overflow-y-auto hide-scrollbar">
+      <div className="flex-1 max-w-7xl w-full mx-auto p-6 flex flex-col space-y-8 overscroll-behavior-contain">
 
         <header className="flex flex-col md:flex-row items-center justify-between pb-6 border-b border-blue-500/20 gap-4">
           <div className="flex items-center cursor-pointer shrink-0" onClick={() => navigate('/')}>
@@ -538,7 +550,7 @@ export default function Dashboard() {
 
             <button
               onClick={() => navigate('/analytics')}
-              className="text-[10px] font-bold tracking-widest uppercase text-slate-400 hover:text-cyan-400 transition-colors bg-[#000]/30 border border-slate-800 px-4 py-2 rounded-md hover:border-cyan-400/50"
+              className="text-[10px] font-bold tracking-widest uppercase text-white transition-colors bg-[#000]/30 border border-slate-800 px-4 py-2 rounded-md hover:border-cyan-400/50"
             >
               Analytics
             </button>
@@ -548,20 +560,20 @@ export default function Dashboard() {
             <div className="flex items-center gap-1.5 p-1 bg-[#000]/50 border border-slate-800 rounded-md">
               <button
                 onClick={() => setEngineMode('clinical')}
-                title="Adversarial consensus pipeline. Toggle Demo (Fast) or Pro (Slow + Accurate) below."
+                title="Adversarial consensus pipeline. Toggle Standard Tier or High Precision below."
                 className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-inter font-semibold tracking-widest uppercase transition-all duration-300 ${engineMode === 'clinical'
-                  ? 'bg-[#00D9FF]/10 text-[#00D9FF] border border-[#00D9FF]/30 shadow-[0_0_15px_rgba(0,217,255,0.1)]'
+                  ? 'bg-[#00D9FF]/10 text-white border border-[#00D9FF]/30'
                   : 'text-slate-500 hover:text-white border border-transparent'
                   }`}
               >
-                <div className={`w-1.5 h-1.5 rounded-full ${engineMode === 'clinical' ? 'bg-[#00D9FF] shadow-[0_0_8px_rgba(0,217,255,1)]' : 'bg-slate-700'}`} />
+                <div className={`w-1.5 h-1.5 rounded-full ${engineMode === 'clinical' ? 'bg-[#00D9FF]' : 'bg-slate-700'}`} />
                 Clinical
               </button>
               <button
                 onClick={() => setEngineMode('edu')}
                 title="Socratic learning mode — hint-based discovery for residents"
                 className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-inter font-semibold tracking-widest uppercase transition-all duration-300 ${engineMode === 'edu'
-                  ? 'bg-indigo-900/20 text-indigo-400 border border-indigo-500/30 shadow-[0_0_15px_rgba(99,102,241,0.2)]'
+                  ? 'bg-indigo-900/20 text-white border border-indigo-500/30'
                   : 'text-slate-500 hover:text-white border border-transparent'
                   }`}
               >
@@ -570,7 +582,7 @@ export default function Dashboard() {
               <button
                 onClick={() => setEngineMode('batch')}
                 className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-inter font-semibold tracking-widest uppercase transition-all duration-300 ${engineMode === 'batch'
-                  ? 'bg-violet-900/20 text-violet-400 border border-violet-500/30'
+                  ? 'bg-violet-900/20 text-white border border-violet-500/30'
                   : 'text-slate-500 hover:text-white border border-transparent'
                   }`}
               >
@@ -595,27 +607,29 @@ export default function Dashboard() {
           <div className="flex items-center gap-1 p-1 bg-[#000]/50 border border-slate-800 rounded-md">
             <button
               onClick={() => setSpeedMode('fast')}
-              title="Demo (Fast) — Synthesized from cached vision findings, <30s. Best for live demos."
+              title="Standard Tier — Synthesized from cached vision findings, <30s. Best for live demos."
               disabled={isLoading || isRevealing}
               className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-inter font-semibold tracking-widest uppercase transition-all duration-300 disabled:opacity-50 ${speedMode === 'fast'
-                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.15)]'
+                ? 'bg-emerald-500/10 text-white border border-emerald-500/30'
                 : 'text-slate-500 hover:text-white border border-transparent'
                 }`}
+              aria-label="Select Standard Tier analysis"
             >
-              <div className={`w-1.5 h-1.5 rounded-full ${speedMode === 'fast' ? 'bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.9)]' : 'bg-slate-700'}`} />
-              Demo (Fast)
+              <div className={`w-1.5 h-1.5 rounded-full ${speedMode === 'fast' ? 'bg-emerald-400' : 'bg-slate-700'}`} />
+              Standard Tier
             </button>
             <button
               onClick={() => setSpeedMode('pro')}
-              title="Pro (Slow + Accurate) — Full adversarial swarm, up to 5 min. Best for clinical accuracy."
+              title="High Precision — Full adversarial swarm, up to 5 min. Best for clinical accuracy."
               disabled={isLoading || isRevealing}
               className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-inter font-semibold tracking-widest uppercase transition-all duration-300 disabled:opacity-50 ${speedMode === 'pro'
-                ? 'bg-violet-500/10 text-violet-400 border border-violet-500/30 shadow-[0_0_12px_rgba(139,92,246,0.15)]'
+                ? 'bg-violet-500/10 text-white border border-violet-500/30'
                 : 'text-slate-500 hover:text-white border border-transparent'
                 }`}
+              aria-label="Select High Precision analysis"
             >
-              <div className={`w-1.5 h-1.5 rounded-full ${speedMode === 'pro' ? 'bg-violet-400 shadow-[0_0_8px_rgba(139,92,246,0.9)]' : 'bg-slate-700'}`} />
-              Pro (Slow + Accurate)
+              <div className={`w-1.5 h-1.5 rounded-full ${speedMode === 'pro' ? 'bg-violet-400' : 'bg-slate-700'}`} />
+              High Precision
             </button>
           </div>
         </div>
@@ -644,7 +658,7 @@ export default function Dashboard() {
               <p className="text-slate-400 text-sm">A critical component crashed. Please reload the page.</p>
             </div>
           }>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full h-fit">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
               <div className="flex flex-col gap-6">
                 <UploadZone
                   file={file}
