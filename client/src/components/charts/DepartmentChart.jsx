@@ -14,7 +14,7 @@ export default function DepartmentChart({ departments = [], maxCount = 1 }) {
                 const pct = (dept.count / max) * 100
                 return (
                     <div key={i} className="flex items-center gap-3">
-                        <span className="text-xs text-slate-400 font-mono w-32 shrink-0 truncate" title={dept.dept}>
+                        <span className="text-xs text-slate-400 font-inter w-32 shrink-0 truncate" title={dept.dept}>
                             {dept.dept}
                         </span>
                         <div className="flex-1 h-5 bg-slate-800 rounded-full overflow-hidden">
@@ -28,7 +28,7 @@ export default function DepartmentChart({ departments = [], maxCount = 1 }) {
                                 }}
                             />
                         </div>
-                        <span className="text-xs font-mono text-slate-400 w-8 text-right">
+                        <span className="text-xs font-inter text-slate-400 w-8 text-right">
                             {dept.count}
                         </span>
                     </div>

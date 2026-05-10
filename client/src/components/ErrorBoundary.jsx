@@ -30,7 +30,7 @@ export default class ErrorBoundary extends Component {
           </div>
           <h2 className="text-xl font-inter font-semibold text-white mb-3">Swarm Engine Error</h2>
           <p className="text-slate-400 text-sm mb-2">An unexpected error occurred in the interface.</p>
-          <p className="text-red-400 font-mono text-xs mb-8 break-all">{this.state.error?.message}</p>
+          <p className="text-red-400 font-inter text-xs mb-8 break-all">{this.state.error?.message}</p>
           <button
             onClick={() => this.setState({ hasError: false, error: null })}
             className="px-8 py-3 rounded-full border border-slate-700 bg-slate-800/50 text-white font-inter font-semibold text-xs tracking-widest uppercase hover:bg-white hover:text-black transition-colors"

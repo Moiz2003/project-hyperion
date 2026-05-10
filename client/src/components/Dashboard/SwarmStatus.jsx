@@ -58,7 +58,7 @@ export default function SwarmStatus() {
           const up = status === 'up'
           return (
             <div key={name} className="flex items-center justify-between gap-4">
-              <span className="text-[10px] font-mono text-slate-400">{AGENT_LABELS[name] || name}</span>
+              <span className="text-[10px] font-inter text-slate-400">{AGENT_LABELS[name] || name}</span>
               <div className="flex items-center gap-1.5">
                 <div className={`w-1.5 h-1.5 rounded-full ${up ? 'bg-emerald-500' : 'bg-red-500'}`} />
                 <span className={`text-[9px] font-bold uppercase ${up ? 'text-emerald-500' : 'text-red-500'}`}>
@@ -70,7 +70,7 @@ export default function SwarmStatus() {
         })}
         {mongo && (
           <div className="flex items-center justify-between gap-4 mt-1 pt-1 border-t border-slate-800">
-            <span className="text-[10px] font-mono text-slate-500">MongoDB</span>
+            <span className="text-[10px] font-inter text-slate-500">MongoDB</span>
             <div className="flex items-center gap-1.5">
               <div className={`w-1.5 h-1.5 rounded-full ${mongo === 'connected' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
               <span className={`text-[9px] font-bold uppercase ${mongo === 'connected' ? 'text-emerald-500' : 'text-amber-500'}`}>

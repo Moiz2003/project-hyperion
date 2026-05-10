@@ -590,34 +590,34 @@ export default function Dashboard() {
             synthesizes from vision-stage findings (<30s), Pro runs the
             real adversarial pipeline with a 5-minute budget. */}
         <div className="flex items-center justify-end gap-3 -mt-4">
-            <span className="text-[10px] font-bold tracking-widest uppercase text-slate-500">Tier</span>
-            <div className="flex items-center gap-1 p-1 bg-[#000]/50 border border-slate-800 rounded-md">
-              <button
-                onClick={() => setSpeedMode('fast')}
-                title="Demo (Fast) — Synthesized from cached vision findings, <30s. Best for live demos."
-                disabled={isLoading || isRevealing}
-                className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-inter font-semibold tracking-widest uppercase transition-all duration-300 disabled:opacity-50 ${speedMode === 'fast'
-                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.15)]'
-                  : 'text-slate-500 hover:text-white border border-transparent'
-                  }`}
-              >
-                <div className={`w-1.5 h-1.5 rounded-full ${speedMode === 'fast' ? 'bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.9)]' : 'bg-slate-700'}`} />
-                Demo (Fast)
-              </button>
-              <button
-                onClick={() => setSpeedMode('pro')}
-                title="Pro (Slow + Accurate) — Full adversarial swarm, up to 5 min. Best for clinical accuracy."
-                disabled={isLoading || isRevealing}
-                className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-inter font-semibold tracking-widest uppercase transition-all duration-300 disabled:opacity-50 ${speedMode === 'pro'
-                  ? 'bg-violet-500/10 text-violet-400 border border-violet-500/30 shadow-[0_0_12px_rgba(139,92,246,0.15)]'
-                  : 'text-slate-500 hover:text-white border border-transparent'
-                  }`}
-              >
-                <div className={`w-1.5 h-1.5 rounded-full ${speedMode === 'pro' ? 'bg-violet-400 shadow-[0_0_8px_rgba(139,92,246,0.9)]' : 'bg-slate-700'}`} />
-                Pro (Slow + Accurate)
-              </button>
-            </div>
+          <span className="text-[10px] font-bold tracking-widest uppercase text-slate-500">Tier</span>
+          <div className="flex items-center gap-1 p-1 bg-[#000]/50 border border-slate-800 rounded-md">
+            <button
+              onClick={() => setSpeedMode('fast')}
+              title="Demo (Fast) — Synthesized from cached vision findings, <30s. Best for live demos."
+              disabled={isLoading || isRevealing}
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-inter font-semibold tracking-widest uppercase transition-all duration-300 disabled:opacity-50 ${speedMode === 'fast'
+                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.15)]'
+                : 'text-slate-500 hover:text-white border border-transparent'
+                }`}
+            >
+              <div className={`w-1.5 h-1.5 rounded-full ${speedMode === 'fast' ? 'bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.9)]' : 'bg-slate-700'}`} />
+              Demo (Fast)
+            </button>
+            <button
+              onClick={() => setSpeedMode('pro')}
+              title="Pro (Slow + Accurate) — Full adversarial swarm, up to 5 min. Best for clinical accuracy."
+              disabled={isLoading || isRevealing}
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-inter font-semibold tracking-widest uppercase transition-all duration-300 disabled:opacity-50 ${speedMode === 'pro'
+                ? 'bg-violet-500/10 text-violet-400 border border-violet-500/30 shadow-[0_0_12px_rgba(139,92,246,0.15)]'
+                : 'text-slate-500 hover:text-white border border-transparent'
+                }`}
+            >
+              <div className={`w-1.5 h-1.5 rounded-full ${speedMode === 'pro' ? 'bg-violet-400 shadow-[0_0_8px_rgba(139,92,246,0.9)]' : 'bg-slate-700'}`} />
+              Pro (Slow + Accurate)
+            </button>
           </div>
+        </div>
 
         {engineMode === 'batch' && (
           <div className="rounded-3xl border border-cyan-500/20 bg-[#0f2341]/20 p-6 backdrop-blur-xl">
@@ -665,7 +665,7 @@ export default function Dashboard() {
                 {showVisualizer && (
                   <div className="p-5 rounded-3xl border border-slate-800 bg-slate-900/30 backdrop-blur-xl">
                     <ErrorBoundary fallback={
-                      <div className="py-6 text-center text-red-400/60 text-xs font-mono tracking-widest uppercase">
+                      <div className="py-6 text-center text-red-400/60 text-xs font-inter tracking-widest uppercase">
                         Swarm visualizer unavailable
                       </div>
                     }>

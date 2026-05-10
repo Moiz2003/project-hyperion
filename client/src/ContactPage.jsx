@@ -71,7 +71,7 @@ export default function ContactPage({ onNavigate }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-50 font-inter selection:bg-cyan-500/30 relative overflow-x-hidden flex flex-col">
+    <div className="min-h-screen bg-[#0a1628] text-slate-50 font-inter selection:bg-cyan-500/30 relative overflow-x-hidden flex flex-col">
       <Starfield />
 
       <Header onNavigate={onNavigate} />

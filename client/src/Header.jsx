@@ -57,7 +57,7 @@ export const Header = ({ onNavigate }) => {
             onClick={() => onNavigate('landing')}
             className="flex items-center gap-3 cursor-pointer group"
           >
-            <HyperionLogo horizontal className="h-10 md:h-12 w-auto transition-transform duration-300 group-hover:scale-[1.02]" />
+            <HyperionLogo horizontal className="h-16 w-auto" />
           </div>
 
           {/* Desktop Nav */}
@@ -69,7 +69,7 @@ export const Header = ({ onNavigate }) => {
                   key={link.view}
                   onClick={() => onNavigate(link.view)}
                   aria-current={isCurrent ? 'page' : undefined}
-                  className={`relative px-4 py-2 text-xs font-bold tracking-widest uppercase transition-colors duration-200 group ${isCurrent ? 'text-cyan-400' : 'text-slate-400 hover:text-cyan-400'
+                  className={`relative px-4 py-2 text-xs font-bold tracking-widest uppercase transition-colors duration-200 group cursor-pointer ${isCurrent ? 'text-cyan-400' : 'text-slate-400 hover:text-cyan-400'
                     }`}
                 >
                   {link.label}
@@ -84,13 +84,13 @@ export const Header = ({ onNavigate }) => {
             <div className="ml-4 flex items-center gap-3">
               <button
                 onClick={() => onNavigate('login')}
-                className="px-5 py-2 text-xs font-bold tracking-widest uppercase text-slate-300 hover:text-white border border-slate-700 rounded-lg hover:border-cyan-400/50 transition-all duration-200"
+                className="px-5 py-2 text-xs font-bold tracking-widest uppercase text-slate-300 hover:text-white border border-slate-700 rounded-lg hover:border-cyan-400/50 transition-all duration-200 cursor-pointer"
               >
                 Log In
               </button>
               <button
                 onClick={() => onNavigate('signup')}
-                className="px-5 py-2 text-xs font-bold tracking-widest uppercase text-slate-950 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-lg hover:shadow-[0_0_20px_rgba(0,217,255,0.3)] transition-all duration-200"
+                className="px-5 py-2 text-xs font-bold tracking-widest uppercase text-slate-950 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-lg hover:shadow-[0_0_20px_rgba(0,217,255,0.3)] transition-all duration-200 cursor-pointer"
               >
                 Sign Up
               </button>
@@ -141,8 +141,8 @@ export const Header = ({ onNavigate }) => {
                     onClick={() => { onNavigate(link.view); setMobileOpen(false) }}
                     aria-current={isCurrent ? 'page' : undefined}
                     className={`block w-full text-left px-4 py-3 text-sm font-bold tracking-widest uppercase rounded-lg transition-all ${isCurrent
-                        ? 'text-cyan-400 bg-cyan-500/10'
-                        : 'text-slate-400 hover:text-cyan-400 hover:bg-slate-800/50'
+                      ? 'text-cyan-400 bg-cyan-500/10'
+                      : 'text-slate-400 hover:text-cyan-400 hover:bg-slate-800/50'
                       }`}
                   >
                     {link.label}

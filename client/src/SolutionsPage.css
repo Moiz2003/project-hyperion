@@ -91,14 +91,14 @@
 .hyperion-solutions-page .solutions-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 2rem;
-    margin-bottom: 3rem;
+    gap: 1.25rem;
+    margin-bottom: 2rem;
 }
 
 .hyperion-solutions-page .solution-card {
     border: 1px solid rgba(0, 212, 255, 0.1);
     border-radius: 12px;
-    padding: 2.5rem;
+    padding: 1.5rem;
     background: linear-gradient(135deg, rgba(0, 212, 255, 0.05), rgba(124, 58, 237, 0.05));
     transition: all 0.3s ease;
     cursor: pointer;
@@ -124,49 +124,50 @@
 }
 
 .hyperion-solutions-page .solution-icon-wrapper {
-    width: 64px;
-    height: 64px;
-    border-radius: 16px;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
     background: rgba(0, 212, 255, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
     border: 1px solid rgba(0, 212, 255, 0.2);
 }
 
 .hyperion-solutions-page .solution-icon-svg {
-    width: 32px;
-    height: 32px;
+    width: 22px;
+    height: 22px;
     color: var(--primary);
 }
 
 .hyperion-solutions-page .solution-card h3 {
     font-family: 'Syne', sans-serif;
-    font-size: 1.5rem;
+    font-size: 1.15rem;
     font-weight: 700;
-    margin-bottom: 1rem;
+    margin-bottom: 0.6rem;
 }
 
 .hyperion-solutions-page .solution-card p {
     color: var(--text-secondary);
-    line-height: 1.7;
-    margin-bottom: 1.5rem;
+    line-height: 1.6;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
 }
 
 .hyperion-solutions-page .solution-highlights {
     list-style: none;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
     padding: 0;
 }
 
 .hyperion-solutions-page .solution-highlights li {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
     color: var(--text-secondary);
-    margin-bottom: 0.75rem;
-    font-size: 0.95rem;
+    margin-bottom: 0.4rem;
+    font-size: 0.85rem;
 }
 
 .hyperion-solutions-page .solution-highlights li::before {
@@ -179,8 +180,8 @@
 .hyperion-solutions-page .solution-metrics {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    padding-top: 1.5rem;
+    gap: 0.75rem;
+    padding-top: 1rem;
     border-top: 1px solid rgba(0, 212, 255, 0.1);
 }
 
@@ -189,7 +190,7 @@
 }
 
 .hyperion-solutions-page .metric-value {
-    font-size: 1.3rem;
+    font-size: 1.1rem;
     font-weight: 700;
     color: var(--primary);
 }

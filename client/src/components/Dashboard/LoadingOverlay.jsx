@@ -9,7 +9,7 @@ export default function LoadingOverlay({ loadingText }) {
       </div>
       <h3 className="text-sm font-inter font-semibold tracking-widest uppercase text-white mb-4">Neural Consensus Active</h3>
       <div className="h-6 relative w-full max-w-sm">
-        <p key={loadingText} className="text-cyan-400 text-center animate-[slideUp_0.3s_ease-out] font-mono text-xs tracking-wider">
+        <p key={loadingText} className="text-cyan-400 text-center animate-[slideUp_0.3s_ease-out] font-inter text-xs tracking-wider">
           {'>'} {loadingText}
         </p>
       </div>

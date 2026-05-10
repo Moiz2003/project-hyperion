@@ -39,27 +39,30 @@ export function generateClinicalPDF({
     const whiteColor = [255, 255, 255];
 
     // ─── Letterhead Header ───────────────────────────────────
-    // Top accent bar
+    // Top accent bar (4mm tall)
     doc.setFillColor(...accentColor);
     doc.rect(0, 0, pageWidth, 4, 'F');
 
-    // Branding
+    // Title — starts 10mm below the accent bar
+    y = 14;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(22);
     doc.setTextColor(...primaryColor);
-    doc.text('PROJECT HYPERION', margin, y + 12);
+    doc.text('PROJECT HYPERION', margin, y);
 
+    // Subtitle — 7mm below title baseline
+    y += 7;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.setTextColor(...mutedColor);
-    doc.text('Clinical AI Diagnostic Swarm  •  Verified Consensus Report', margin, y + 20);
+    doc.text('Clinical AI Diagnostic Swarm  \u2022  Verified Consensus Report', margin, y);
 
-    // Divider line
-    y = 30;
+    // Divider line — 5mm below subtitle
+    y += 6;
     doc.setDrawColor(...accentColor);
     doc.setLineWidth(0.5);
     doc.line(margin, y, pageWidth - margin, y);
-    y += 6;
+    y += 5;
 
     // ─── Metadata Row ────────────────────────────────────────
     doc.setFont('helvetica', 'bold');
@@ -77,16 +80,15 @@ export function generateClinicalPDF({
         `Critic Interventions: ${criticInterventions}`,
     ];
 
-    let metaX = margin;
-    doc.text(metaLeft[0], metaX, y);
-    doc.text(metaLeft[1], metaX, y + 4);
-    doc.text(metaLeft[2], metaX, y + 8);
+    doc.text(metaLeft[0], margin, y);
+    doc.text(metaLeft[1], margin, y + 5);
+    doc.text(metaLeft[2], margin, y + 10);
 
     doc.text(metaRight[0], pageWidth - margin - doc.getTextWidth(metaRight[0]), y);
-    doc.text(metaRight[1], pageWidth - margin - doc.getTextWidth(metaRight[1]), y + 4);
-    doc.text(metaRight[2], pageWidth - margin - doc.getTextWidth(metaRight[2]), y + 8);
+    doc.text(metaRight[1], pageWidth - margin - doc.getTextWidth(metaRight[1]), y + 5);
+    doc.text(metaRight[2], pageWidth - margin - doc.getTextWidth(metaRight[2]), y + 10);
 
-    y += 16;
+    y += 18;
 
     // ─── Embedded Scan Image ─────────────────────────────────
     if (imageBase64) {

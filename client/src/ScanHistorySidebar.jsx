@@ -160,7 +160,7 @@ export default function ScanHistorySidebar({ onSelectScan, isOpen, onToggle }) {
 
                         {/* Source indicator */}
                         <div className="px-4 py-2 border-b border-slate-800/50">
-                            <span className="text-[10px] font-mono uppercase tracking-widest text-slate-600">
+                            <span className="text-[10px] font-inter uppercase tracking-widest text-slate-600">
                                 Source: {source === 'mongodb' ? 'Cloud DB' : 'Local Storage'}
                             </span>
                         </div>
@@ -176,7 +176,7 @@ export default function ScanHistorySidebar({ onSelectScan, isOpen, onToggle }) {
                             {!loading && scans.length === 0 && (
                                 <div className="flex flex-col items-center justify-center py-12 text-slate-600">
                                     <HistoryIcon />
-                                    <p className="mt-3 text-xs font-mono tracking-wider">No scans recorded yet</p>
+                                    <p className="mt-3 text-xs font-inter tracking-wider">No scans recorded yet</p>
                                 </div>
                             )}
 
@@ -214,10 +214,10 @@ export default function ScanHistorySidebar({ onSelectScan, isOpen, onToggle }) {
                                                     {scan.urgencyFlag || 'N/A'}
                                                 </span>
                                             </div>
-                                            <p className="text-xs text-slate-400 font-mono leading-relaxed truncate">
+                                            <p className="text-xs text-slate-400 font-inter leading-relaxed truncate">
                                                 {truncate(scan.verifiedReport || scan.rawFindings)}
                                             </p>
-                                            <p className="text-[10px] text-slate-600 font-mono mt-1">
+                                            <p className="text-[10px] text-slate-600 font-inter mt-1">
                                                 {formatDate(scan.createdAt)}
                                             </p>
                                         </div>
@@ -228,7 +228,7 @@ export default function ScanHistorySidebar({ onSelectScan, isOpen, onToggle }) {
 
                         {/* Footer */}
                         <div className="p-3 border-t border-slate-800 text-center">
-                            <p className="text-[9px] text-slate-700 font-mono uppercase tracking-widest">
+                            <p className="text-[9px] text-slate-700 font-inter uppercase tracking-widest">
                                 {scans.length} scan{scans.length !== 1 ? 's' : ''} cached
                             </p>
                         </div>

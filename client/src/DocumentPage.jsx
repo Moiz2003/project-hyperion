@@ -64,7 +64,7 @@ const DOC_CONTENT = {
         <p className="text-xl text-slate-300 font-medium leading-relaxed">
           Standard medical AI hallucinates because it forces a single transformer to both extract visual geometry and synthesize clinical knowledge. Hyperion splits this cognitive load across an adversarial network.
         </p>
-        
+
         <div className="p-8 rounded-2xl bg-slate-900/40 border border-slate-800 shadow-xl relative overflow-hidden group hover:border-cyan-500/50 transition-colors">
           <div className="absolute top-0 left-0 w-1 h-full bg-cyan-500 shadow-[0_0_20px_rgba(34,211,238,1)]"></div>
           <h3 className="text-2xl font-inter font-semibold text-white mb-4">Node 1: Edge Vision (InternVL)</h3>
@@ -97,7 +97,7 @@ const DOC_CONTENT = {
     content: (
       <div className="space-y-8 text-slate-300 leading-relaxed font-medium">
         <p>Hyperion is designed to be completely air-gapped. Deployment requires zero external API keys if running fully local open-weights.</p>
-        
+
         <h3 className="text-2xl font-inter font-semibold text-white mt-12 mb-6">Hardware Requirements</h3>
         <ul className="list-disc list-inside space-y-4 text-slate-400 ml-4">
           <li><strong>Minimum:</strong> NVIDIA RTX 3050 (8GB VRAM) or Apple M1/M2 (16GB Unified Memory)</li>
@@ -106,13 +106,13 @@ const DOC_CONTENT = {
         </ul>
 
         <h3 className="text-2xl font-inter font-semibold text-white mt-12 mb-6">Local Installation via Ollama</h3>
-        <div className="p-6 bg-[#000] border border-slate-800 rounded-xl font-mono text-sm text-cyan-400 shadow-inner">
+        <div className="p-6 bg-[#000] border border-slate-800 rounded-xl font-inter text-sm text-cyan-400 shadow-inner">
           <p className="text-slate-600 mb-2"># Install the Vision Agent (Node 1)</p>
           <p>ollama run internvl</p>
-          <br/>
+          <br />
           <p className="text-slate-600 mb-2"># Start the Express Orchestrator</p>
           <p>cd server && npm run dev</p>
-          <br/>
+          <br />
           <p className="text-slate-600 mb-2"># Launch the React HUD</p>
           <p>cd client && npm run dev</p>
         </div>
@@ -130,30 +130,30 @@ const DOC_CONTENT = {
           <span className="px-3 py-1 bg-emerald-950/50 text-emerald-400 text-xs tracking-widest uppercase rounded-sm border border-emerald-900/50">POST</span>
           /api/analyze-scan
         </h3>
-        
-        <div className="p-6 bg-[#000] border border-slate-800 rounded-xl font-mono text-sm text-slate-300 overflow-x-auto shadow-inner mt-4">
+
+        <div className="p-6 bg-[#000] border border-slate-800 rounded-xl font-inter text-sm text-slate-300 overflow-x-auto shadow-inner mt-4">
           <p className="text-slate-500 mb-4">// Request Example (JavaScript Fetch)</p>
-          <p className="text-cyan-400">const</p> formData = <p className="text-cyan-400 inline">new</p> FormData();<br/>
-          formData.<p className="text-blue-400 inline">append</p>('xray_image', fileInput.files[0]);<br/>
-          <br/>
-          <p className="text-cyan-400 inline">const</p> response = <p className="text-cyan-400 inline">await</p> <p className="text-blue-400 inline">fetch</p>('http://localhost:3000/api/analyze-scan', {'{'} <br/>
-          &nbsp;&nbsp;method: 'POST',<br/>
-          &nbsp;&nbsp;body: formData<br/>
+          <p className="text-cyan-400">const</p> formData = <p className="text-cyan-400 inline">new</p> FormData();<br />
+          formData.<p className="text-blue-400 inline">append</p>('xray_image', fileInput.files[0]);<br />
+          <br />
+          <p className="text-cyan-400 inline">const</p> response = <p className="text-cyan-400 inline">await</p> <p className="text-blue-400 inline">fetch</p>('http://localhost:3000/api/analyze-scan', {'{'} <br />
+          &nbsp;&nbsp;method: 'POST',<br />
+          &nbsp;&nbsp;body: formData<br />
           {'}'});
         </div>
 
         <h3 className="text-xl font-bold text-white mt-12 mb-4">JSON Response Schema</h3>
-        <div className="p-6 bg-[#000] border border-slate-800 rounded-xl font-mono text-sm text-emerald-400 shadow-inner">
-          {'{'}<br/>
-          &nbsp;&nbsp;"status": "success",<br/>
-          &nbsp;&nbsp;"data": {'{'}<br/>
-          &nbsp;&nbsp;&nbsp;&nbsp;"raw_findings": "...",<br/>
-          &nbsp;&nbsp;&nbsp;&nbsp;"verified_report": "...",<br/>
-          &nbsp;&nbsp;&nbsp;&nbsp;"urgency_flag": "High",<br/>
-          &nbsp;&nbsp;&nbsp;&nbsp;"recommended_dept": "Pulmonology",<br/>
-          &nbsp;&nbsp;&nbsp;&nbsp;"critic_interventions": 2<br/>
-          &nbsp;&nbsp;{'}'},<br/>
-          &nbsp;&nbsp;"processing_latency": "3.2s"<br/>
+        <div className="p-6 bg-[#000] border border-slate-800 rounded-xl font-inter text-sm text-emerald-400 shadow-inner">
+          {'{'}<br />
+          &nbsp;&nbsp;"status": "success",<br />
+          &nbsp;&nbsp;"data": {'{'}<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;"raw_findings": "...",<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;"verified_report": "...",<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;"urgency_flag": "High",<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;"recommended_dept": "Pulmonology",<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;"critic_interventions": 2<br />
+          &nbsp;&nbsp;{'}'},<br />
+          &nbsp;&nbsp;"processing_latency": "3.2s"<br />
           {'}'}
         </div>
       </div>
@@ -166,7 +166,7 @@ const DOC_CONTENT = {
       <div className="space-y-6 text-slate-400 leading-relaxed">
         <p className="font-bold text-white">Last Updated: April 2026</p>
         <p>Project Hyperion operates on a "Zero Data Retention" architecture. By design, our software does not phone home, does not store Protected Health Information (PHI) on our servers, and does not require an active internet connection to execute inference.</p>
-        
+
         <h3 className="text-xl font-bold text-white mt-8">1. Air-Gapped Execution</h3>
         <p>When deployed on local hardware (Academic and Clinician Pro tiers), all images remain entirely within your facility's isolated network. The software loads the inference weights into local VRAM and purges all tensors immediately upon returning the final JSON report.</p>
 
@@ -181,7 +181,7 @@ const DOC_CONTENT = {
     content: (
       <div className="space-y-6 text-slate-400 leading-relaxed">
         <p>By downloading or utilizing the Hyperion Edge Engine, you agree to the following terms regarding clinical liability and software usage.</p>
-        
+
         <h3 className="text-xl font-bold text-white mt-8">1. Diagnostic Augmentation Only</h3>
         <p>Hyperion is an assistive tool, not an autonomous diagnostic agent. A licensed medical practitioner must always review the 'Verified Consensus Report' before initiating patient treatment. We are not liable for clinical misdiagnoses.</p>
 
@@ -221,7 +221,7 @@ export default function DocumentPage({ type, onNavigate }) {
   const doc = DOC_CONTENT[type] || DOC_CONTENT['feature-tour'];
 
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-50 font-inter selection:bg-cyan-500/30 relative overflow-x-hidden flex flex-col">
+    <div className="min-h-screen bg-[#0a1628] text-slate-50 font-inter selection:bg-cyan-500/30 relative overflow-x-hidden flex flex-col">
       <Starfield />
 
       <Header onNavigate={onNavigate} />
@@ -236,7 +236,7 @@ export default function DocumentPage({ type, onNavigate }) {
         >
           {/* Decorative Glow */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 blur-[100px] pointer-events-none rounded-full" />
-          
+
           <div className="mb-12 border-b border-slate-800 pb-12 relative z-10">
             <h2 className="text-xs font-bold tracking-widest text-cyan-400 uppercase mb-4">{doc.subtitle}</h2>
             <h1 className="text-4xl md:text-6xl font-inter font-bold text-white tracking-tighter leading-tight">

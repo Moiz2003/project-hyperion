@@ -41,7 +41,7 @@ export default function Tooltip({
                     className={`
             absolute z-50 pointer-events-none
             px-3 py-2 rounded-xl border border-slate-800 bg-slate-950/95 backdrop-blur-xl shadow-2xl
-            text-[10px] font-mono text-slate-400 whitespace-nowrap
+            text-[10px] font-inter text-slate-400 whitespace-nowrap
             animate-[fadeIn_0.15s_ease-out]
             ${positionClasses[position] || positionClasses.top}
             ${className}

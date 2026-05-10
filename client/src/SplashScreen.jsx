@@ -30,13 +30,13 @@ export default function SplashScreen({ onComplete }) {
   }, [onComplete]);
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.8, ease: "easeInOut" }}
       className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950 text-white"
     >
-      <motion.div 
+      <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.5 }}
@@ -45,7 +45,7 @@ export default function SplashScreen({ onComplete }) {
         <HyperionLogo className="h-52 w-auto mb-0" />
 
         <div className="w-64 h-1 bg-slate-900 rounded-full overflow-hidden mb-4">
-          <motion.div 
+          <motion.div
             className="h-full bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.8)]"
             initial={{ width: "0%" }}
             animate={{ width: `${progress}%` }}
@@ -54,11 +54,11 @@ export default function SplashScreen({ onComplete }) {
         </div>
 
         <div className="h-6 flex items-center justify-center">
-          <motion.p 
+          <motion.p
             key={statusText}
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-sm font-mono text-cyan-500/80 uppercase tracking-wider"
+            className="text-sm font-inter text-cyan-500/80 uppercase tracking-wider"
           >
             {statusText}
           </motion.p>
