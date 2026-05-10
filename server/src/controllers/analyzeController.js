@@ -202,6 +202,7 @@ async function runPipeline(imageBuffer, imageHash, requestId, log, demoMode, emi
       rawFindings = await runVisionAgent(imageBuffer, requestId)
       agentTimings.vision = `${((Date.now() - t) / 1000).toFixed(2)}s`
       if (!isViable(rawFindings)) throw new Error(`Vision returned degenerate output (${rawFindings?.length ?? 0} chars)`)
+      if (opts.captureState) opts.captureState.rawFindings = rawFindings
       emit('agent_done', { agent: 'vision', elapsed: agentTimings.vision, chars: rawFindings.length, preview: rawFindings.slice(0, 200) })
     } catch (err) {
       log.warn({ err: err.message }, 'Vision agent failed — using fallback')

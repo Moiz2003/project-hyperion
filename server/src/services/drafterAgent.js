@@ -24,17 +24,23 @@ async function runDrafterAgent(rawFindings, criticFeedback = null, requestId, { 
   } else if (isRevision) {
     instruction = [
       'You are a Lead Radiologist and Clinical AI. You are revising a prior draft.',
+      'You MUST output ALL five sections using these EXACT markdown headers:',
+      '## Summary of Findings',
+      '## Differential Diagnosis',
+      '## Recommended Workup',
+      '## Red Flags',
+      '## Patient-Facing Summary',
       '',
       '[SECTION: ORIGINAL IMAGING FINDINGS]',
       rawFindings,
       '',
-      '[SECTION: CRITIC FEEDBACK]',
+      '[SECTION: CRITIC FEEDBACK — fix every point below]',
       criticFeedback,
       '',
       '[SECTION: TASK]',
-      'Revise the clinical assessment to fix every issue raised by the critic above.',
-      'Keep all sections: Summary of Findings, Differential Diagnosis, Recommended Workup, Red Flags, Patient-Facing Summary.',
-      'Do not restate the critic feedback. Only output the corrected report.',
+      'Revise the clinical assessment to address every issue the critic raised.',
+      'Do NOT restate the critic feedback. Output only the corrected full report with all five sections.',
+      'Each section must have substantive content — no placeholders.',
     ].join('\n')
   } else {
     const { drafter: drafterPrompt } = getPrompts()

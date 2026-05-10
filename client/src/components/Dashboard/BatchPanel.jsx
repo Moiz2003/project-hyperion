@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import ProcessingOverlay from './ProcessingOverlay'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 const MAX_FILES = 5
@@ -191,12 +192,12 @@ export default function BatchPanel({ speedMode = 'fast' }) {
         </button>
       )}
 
-      {isLoading && (
-        <div className="flex items-center justify-center gap-3 py-8 text-cyan-400 font-inter text-xs animate-pulse">
-          <span className="text-xl">⚡</span>
-          Running {files.length} parallel swarm pipelines...
-        </div>
-      )}
+      <ProcessingOverlay
+        isVisible={isLoading}
+        pipeline="batch"
+        mode={speedMode === 'fast' ? 'demo' : 'pro'}
+        batchCount={files.length}
+      />
 
       {/* Summary */}
       {summary && (

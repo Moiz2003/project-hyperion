@@ -9,6 +9,7 @@ import ResultsPanel from '../components/Dashboard/ResultsPanel'
 import SwarmVisualizer from '../components/Dashboard/SwarmVisualizer'
 import SwarmStatus from '../components/Dashboard/SwarmStatus'
 import BatchPanel from '../components/Dashboard/BatchPanel'
+import ProcessingOverlay from '../components/Dashboard/ProcessingOverlay'
 import ErrorBoundary from '../components/ErrorBoundary'
 import { DEMO_SCAN } from '../data/demoScan'
 import { API_BASE, MAX_SSE_BUFFER_BYTES } from '../utils/constants'
@@ -711,6 +712,12 @@ export default function Dashboard() {
           to { opacity: 1; }
         }
       `}</style>
+
+      <ProcessingOverlay
+        isVisible={isLoading || isRevealing}
+        pipeline={engineMode === 'batch' ? 'batch' : engineMode}
+        mode={speedMode === 'fast' ? 'demo' : 'pro'}
+      />
     </div>
   )
 }

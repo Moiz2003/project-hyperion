@@ -22,7 +22,7 @@ async function runCriticAgent(draftAssessment, rawFindings, requestId) {
         { role: 'system', content: system },
         { role: 'user', content: user },
       ],
-      max_tokens: 512,
+      max_tokens: 2048,
       temperature: 0.1,
       stop: ['User:', 'Assistant:', '<|eot_id|>'],
       timeout: 45000,

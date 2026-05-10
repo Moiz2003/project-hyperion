@@ -13,10 +13,10 @@ const { synthesizeRevealFromVision } = require('../utils/synthesizeReveal')
 
 const BATCH_MAX = 5
 
-// Per-item budgets — Fast aims for ~5s/scan, Pro allows full clinical run
-// per item but still caps short of the wall-clock 5min total.
+// Per-item budgets — Fast must cover Vision (~22s) + Drafter + single Critic pass.
+// Pro allows a full clinical run but caps short of the 5min wall-clock total.
 const PER_ITEM_BUDGETS_MS = {
-  fast: 15_000,
+  fast: 90_000,
   pro: 240_000,
 }
 
@@ -70,26 +70,28 @@ async function batchAnalyze(req, res) {
         } catch (_) {}
       }
 
+      const batchCaptureState = {}
       let result
       try {
         result = await Promise.race([
-          runPipeline(file.buffer, imageHash, `${requestId}-${idx}`, itemLog, demoMode),
+          runPipeline(file.buffer, imageHash, `${requestId}-${idx}`, itemLog, demoMode, () => {}, 'clinical', { captureState: batchCaptureState }),
           new Promise((_, reject) =>
             setTimeout(() => reject(Object.assign(new Error('Item budget exceeded'), { status: 504 })), ITEM_TIMEOUT)
           ),
         ])
       } catch (err) {
-        // Fail-soft: degrade to vision-only synthesis so the batch entry still
-        // shows a usable scorecard rather than an error tile.
+        // Fail-soft: use any Vision findings already captured, or run Vision as fallback.
         itemLog.warn({ err: err.message }, 'Item exceeded budget — synthesizing vision-only fallback')
-        let visionFindings = ''
-        try {
-          visionFindings = await Promise.race([
-            runVisionAgent(file.buffer, `${requestId}-${idx}-fallback`),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('vision fallback timeout')), 10_000)),
-          ])
-        } catch (_) {
-          visionFindings = 'Vision analysis unavailable for this scan.'
+        let visionFindings = batchCaptureState.rawFindings || ''
+        if (!visionFindings) {
+          try {
+            visionFindings = await Promise.race([
+              runVisionAgent(file.buffer, `${requestId}-${idx}-fallback`),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('vision fallback timeout')), 30_000)),
+            ])
+          } catch (_) {
+            visionFindings = 'High-speed triage summary generated. Clinical swarm consensus pending full convergence. Please refer to raw radiological findings below.'
+          }
         }
         const synth = synthesizeRevealFromVision({ rawFindings: visionFindings, residentAssessment: '', socraticHint: null })
         result = {

@@ -13,7 +13,7 @@ function resolveSpeed(req) {
 }
 
 const SPEED_BUDGETS_MS = {
-  fast: 28_000,   // hard wall-clock cap for fast tier
+  fast: 90_000,   // hard wall-clock cap for fast tier (Vision can take ~22s alone)
   pro: 290_000,   // hard wall-clock cap for pro tier (just under 5 min)
 }
 

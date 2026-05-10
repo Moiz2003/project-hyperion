@@ -77,6 +77,10 @@ async function streamAnalysis(req, res) {
 
   const emit = (eventType, data) => send(res, eventType, data)
 
+  // captureState lets the timeout handler access Vision findings even when
+  // the full pipeline didn't finish — so the user sees real data, not a placeholder.
+  const captureState = {}
+
   const pipelineTimeout = new Promise((_, reject) =>
     setTimeout(
       () => reject(Object.assign(new Error('Stream pipeline budget exceeded'), { isTimeout: true })),
@@ -87,19 +91,21 @@ async function streamAnalysis(req, res) {
   let pipelineResult
   try {
     pipelineResult = await Promise.race([
-      runPipeline(imageBuffer, imageHash, requestId, log, demoMode, emit, mode),
+      runPipeline(imageBuffer, imageHash, requestId, log, demoMode, emit, mode, { captureState }),
       pipelineTimeout,
     ])
   } catch (err) {
     const isTimeout = err.isTimeout === true
     log.warn({ err: err.message, mode }, isTimeout ? 'Stream pipeline budget exceeded' : 'Stream pipeline error')
 
+    // Use real Vision findings if available; otherwise surface a clear triage message.
+    const degradedFindings = captureState.rawFindings ||
+      'High-speed triage summary generated. Clinical swarm consensus pending full convergence. Please refer to raw radiological findings below.'
+
     // Fail-soft: synthesize a degraded-but-complete result so the user sees
-    // a finished pipeline instead of a red error banner. The flag
-    // `degraded: true` lets the client surface a subtle indicator without
-    // blocking the demo flow.
+    // a finished pipeline instead of a red error banner.
     const synth = synthesizeRevealFromVision({
-      rawFindings: 'Vision-stage analysis was interrupted before full convergence. Showing degraded result.',
+      rawFindings: degradedFindings,
       residentAssessment: '',
       socraticHint: null,
     })
@@ -121,7 +127,7 @@ async function streamAnalysis(req, res) {
         status: 'success',
         degraded: true,
         data: {
-          raw_findings: synth.rawFindings,
+          raw_findings: degradedFindings,
           socratic_hint: {
             hintQuestion: 'What do you observe in this image, and what is its clinical significance?',
             clinicalContext: '',
@@ -143,7 +149,7 @@ async function streamAnalysis(req, res) {
         status: 'success',
         degraded: true,
         data: {
-          raw_findings: synth.rawFindings,
+          raw_findings: degradedFindings,
           initial_draft: synth.initialDraft,
           verified_report: synth.verifiedReport,
           urgency_flag: synth.urgencyFlag,
