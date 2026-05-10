@@ -111,18 +111,22 @@ async function streamAnalysis(req, res) {
     })
     const elapsed = ((Date.now() - t0) / 1000).toFixed(2)
     if (mode === 'edu') {
-      // Cache so /reveal still works
-      eduSessionCache.set(imageHash, {
-        imageBuffer,
-        rawFindings: synth.rawFindings,
-        socraticHint: {
-          hintQuestion: 'What do you observe in this image, and what is its clinical significance?',
-          clinicalContext: '',
-          focusAnatomy: '',
-          difficulty: 'intermediate',
-          keyFinding: '',
-        },
-      })
+      // Only populate the edu cache with REAL Vision findings so the reveal
+      // flow doesn't run on degraded placeholder text. If Vision didn't finish,
+      // omit rawFindings — reveal will re-run Vision from the uploaded file.
+      if (captureState.rawFindings) {
+        eduSessionCache.set(imageHash, {
+          imageBuffer,
+          rawFindings: captureState.rawFindings,
+          socraticHint: {
+            hintQuestion: 'What do you observe in this image, and what is its clinical significance?',
+            clinicalContext: '',
+            focusAnatomy: '',
+            difficulty: 'intermediate',
+            keyFinding: '',
+          },
+        })
+      }
       send(res, 'pipeline_complete', {
         status: 'success',
         degraded: true,
@@ -252,6 +256,19 @@ async function emitFastSyntheticEvents(emit) {
   emit('critic_accepted', { agent: 'critic', elapsed: '0.40s', iteration: 1, urgency_flag: null, recommended_dept: null, interventions: 0 })
 }
 
+// Returns true only for genuine radiological findings — rejects known
+// degraded-fallback strings so they're never used as precomputedRawFindings.
+const KNOWN_FALLBACK_PREFIXES = [
+  'Vision analysis unavailable',
+  'High-speed triage summary generated',
+  'Cached vision data unavailable',
+  'Scan could not be analyzed',
+]
+function isRealFindings(text) {
+  if (!text || text.length < 80) return false
+  return !KNOWN_FALLBACK_PREFIXES.some(p => text.startsWith(p))
+}
+
 async function streamReveal(req, res) {
   const requestId = req.id || crypto.randomUUID()
   const speed = resolveSpeed(req)
@@ -280,7 +297,12 @@ async function streamReveal(req, res) {
     const cached = eduSessionCache.get(imageHash)
     if (cached) {
       cachedSocraticHint = cached.socraticHint
-      cachedRawFindings = cached.rawFindings
+      // Only use cached findings if they're real radiological data — never
+      // use a previously-stored degraded fallback string.
+      cachedRawFindings = isRealFindings(cached.rawFindings) ? cached.rawFindings : null
+      if (cached.rawFindings && !cachedRawFindings) {
+        log.warn({ imageHash }, 'Reveal — cached rawFindings detected as degraded placeholder; will re-run Vision')
+      }
     }
   } else {
     imageHash = req.body.image_hash
@@ -321,7 +343,10 @@ async function streamReveal(req, res) {
     }
     imageBuffer = cached.imageBuffer
     cachedSocraticHint = cached.socraticHint
-    cachedRawFindings = cached.rawFindings
+    cachedRawFindings = isRealFindings(cached.rawFindings) ? cached.rawFindings : null
+    if (cached.rawFindings && !cachedRawFindings) {
+      log.warn({ imageHash }, 'Reveal — cache-only rawFindings is degraded placeholder; will re-run Vision')
+    }
   }
 
   send(res, 'pipeline_start', {

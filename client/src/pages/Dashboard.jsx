@@ -385,7 +385,7 @@ export default function Dashboard() {
     // Tier-aware ceiling. Fast tier should always finish in seconds —
     // 60s gives plenty of headroom for cold dyno + synthesis. Pro tier
     // can take up to 5min with the real adversarial pipeline.
-    const ceilingMs = speedMode === 'fast' ? 60_000 : 300_000
+    const ceilingMs = speedMode === 'fast' ? 60_000 : 420_000
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), ceilingMs)
 
