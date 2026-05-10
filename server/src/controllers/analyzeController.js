@@ -249,6 +249,7 @@ async function runPipeline(imageBuffer, imageHash, requestId, log, demoMode, emi
 
   // Stage 2: Initial draft
   log.info({ demoMode, maxIterations }, 'Stage 2: Adversarial consensus loop')
+  console.log(`[DRAFTER] Starting. demoMode=${demoMode} url=${CONFIG.drafterUrl} model=${CONFIG.drafterModel} rawFindings_len=${rawFindings?.length} preview="${rawFindings?.slice(0, 120)}"`)
   emit('agent_start', { agent: 'drafter', label: 'Drafter Agent', detail: 'Composing preliminary clinical assessment...' })
   let draftReport
   let initialDraft
@@ -256,23 +257,29 @@ async function runPipeline(imageBuffer, imageHash, requestId, log, demoMode, emi
     const t = Date.now()
     draftReport = await runDrafterAgent(rawFindings, null, requestId)
     agentTimings.drafter = `${((Date.now() - t) / 1000).toFixed(2)}s`
+    console.log(`[DRAFTER] Done in ${agentTimings.drafter}. chars=${draftReport?.length}`)
     if (!isViable(draftReport)) throw new Error(`Drafter returned degenerate output (${draftReport?.length ?? 0} chars)`)
     initialDraft = draftReport
     emit('agent_done', { agent: 'drafter', elapsed: agentTimings.drafter, chars: draftReport.length })
   } catch (err) {
+    console.error(`[DRAFTER] FAILED: ${err.message}`)
     log.warn({ err: err.message }, 'Drafter agent failed — retrying with simplified prompt')
     emit('agent_retry', { agent: 'drafter', detail: 'Retrying with simplified prompt...' })
     try {
       const t = Date.now()
       draftReport = await runDrafterAgent(rawFindings, null, requestId, { simplified: true })
       agentTimings.drafter = `${((Date.now() - t) / 1000).toFixed(2)}s (simplified)`
+      console.log(`[DRAFTER] Simplified done in ${agentTimings.drafter}. chars=${draftReport?.length}`)
       if (!isViable(draftReport)) throw new Error(`Simplified drafter returned degenerate output (${draftReport?.length ?? 0} chars)`)
       log.info('Simplified drafter retry succeeded')
       initialDraft = draftReport
       emit('agent_done', { agent: 'drafter', elapsed: agentTimings.drafter, chars: draftReport.length, simplified: true })
     } catch (retryErr) {
-      log.warn({ err: retryErr.message }, 'Simplified drafter retry failed — using text fallback')
-      draftReport = `Preliminary findings from imaging: ${rawFindings}`
+      console.error(`[DRAFTER] Simplified ALSO FAILED: ${retryErr.message} — using raw findings as draft`)
+      log.warn({ err: retryErr.message }, 'Simplified drafter retry failed — using raw findings as draft')
+      // Surface real Vision findings rather than a generic placeholder so the Critic still has
+      // something substantive to verify and the user sees real data in the verified_report.
+      draftReport = rawFindings
       initialDraft = draftReport
       agentTimings.drafter = 'failed'
       partial = true
@@ -289,6 +296,7 @@ async function runPipeline(imageBuffer, imageHash, requestId, log, demoMode, emi
   // Stage 3: Adversarial loop (skipped after first critic pass in demo mode)
   for (let i = 0; i < maxIterations; i++) {
     const iteration = i + 1
+    console.log(`[CRITIC] Pass ${iteration}/${maxIterations}. demoMode=${demoMode} url=${CONFIG.criticUrl} model=${CONFIG.criticModel} draft_len=${draftReport?.length}`)
     emit('agent_start', {
       agent: 'critic',
       label: `Critic Agent (pass ${iteration})`,
@@ -302,6 +310,7 @@ async function runPipeline(imageBuffer, imageHash, requestId, log, demoMode, emi
       criticResult = await runCriticAgent(draftReport, rawFindings, requestId)
       const elapsed = `${((Date.now() - t) / 1000).toFixed(2)}s`
       criticTimings.push(elapsed)
+      console.log(`[CRITIC] Pass ${iteration} done in ${elapsed}. rejected=${criticResult.rejected} urgency=${criticResult.urgencyFlag} verifiedReport_len=${criticResult.verifiedReport?.length}`)
       if (!isViable(criticResult.verifiedReport)) throw new Error('Critic returned degenerate report')
 
       urgencyFlag = criticResult.urgencyFlag
@@ -318,6 +327,7 @@ async function runPipeline(imageBuffer, imageHash, requestId, log, demoMode, emi
       log.info({ iteration, issues: criticResult.issuesFound }, 'Critic rejected — revising')
       emit('critic_rejected', { agent: 'critic', elapsed, iteration, issues: criticResult.issuesFound, interventions: totalInterventions })
     } catch (err) {
+      console.error(`[CRITIC] Pass ${iteration} FAILED: ${err.message}`)
       log.warn({ err: err.message, iteration }, 'Critic agent failed — keeping current draft')
       partial = true
       emit('agent_failed', { agent: 'critic', error: err.message, iteration })

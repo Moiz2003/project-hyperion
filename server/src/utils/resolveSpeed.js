@@ -14,7 +14,7 @@ function resolveSpeed(req) {
 
 const SPEED_BUDGETS_MS = {
   fast: 90_000,   // hard wall-clock cap for fast tier (Vision can take ~22s alone)
-  pro: 290_000,   // hard wall-clock cap for pro tier (just under 5 min)
+  pro: 400_000,   // hard wall-clock cap for pro tier (full adversarial loop headroom)
 }
 
 const PER_AGENT_TIMEOUTS_MS = {

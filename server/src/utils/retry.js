@@ -9,6 +9,8 @@ const isRetryable = (err) => {
     msg.includes('429') || msg.includes('500') || msg.includes('503') ||
     code === 429 || code === 500 || code === 503 ||
     msg.includes('ECONNRESET') || msg.includes('ETIMEDOUT') ||
+    msg.includes('ECONNREFUSED') || msg.includes('ENOTFOUND') ||
+    msg.includes('socket hang up') || msg.includes('network') ||
     msg.includes('timeout') || err?.name === 'AbortError'
   )
 }
