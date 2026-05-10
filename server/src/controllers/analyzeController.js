@@ -205,6 +205,7 @@ async function runPipeline(imageBuffer, imageHash, requestId, log, demoMode, emi
       if (opts.captureState) opts.captureState.rawFindings = rawFindings
       emit('agent_done', { agent: 'vision', elapsed: agentTimings.vision, chars: rawFindings.length, preview: rawFindings.slice(0, 200) })
     } catch (err) {
+      console.error(`[VISION] FAILED: ${err.message}`)
       log.warn({ err: err.message }, 'Vision agent failed — using fallback')
       rawFindings = 'Vision analysis unavailable. Manual review required.'
       agentTimings.vision = 'failed'
