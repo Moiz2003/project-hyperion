@@ -94,6 +94,7 @@ const upload = multer({
 // ── Agent: Vision (InternVL-Chat-V1-5-AWQ, port 8001) ────────────────────────
 // Receives a raw image Buffer, returns structured imaging findings as text.
 const runVisionAgent = async (imageBuffer) => {
+  console.log('\n[DEBUG] 👁️ Vision Agent: Starting analysis...')
   const base64 = imageBuffer.toString('base64')
 
   const completion = await visionClient.chat.completions.create({
@@ -121,13 +122,18 @@ const runVisionAgent = async (imageBuffer) => {
     temperature: 0.1,
   })
 
-  return completion.choices[0].message.content.trim()
+  const result = completion.choices[0].message.content.trim()
+  console.log('--------------------------------------------------')
+  console.log('[DEBUG] 👁️ Vision Output:\n', result)
+  console.log('--------------------------------------------------')
+  return result
 }
 
 // ── Agent: Drafter (Meditron-70B-AWQ, port 8000) ─────────────────────────────
 // Uses /v1/completions + explicit LLaMA-2 instruct format because Meditron has
 // no tokenizer chat_template in transformers ≥ v4.44.
 const runDrafterAgent = async (rawFindings) => {
+  console.log('\n[DEBUG] ✍️ Drafter Agent: Generating clinical assessment...')
   const instruction = [
     'You are Meditron, a clinical AI trained on medical literature and evidence-based guidelines.',
     'A radiologist has provided imaging findings. Write a complete structured clinical assessment.',
@@ -150,13 +156,18 @@ const runDrafterAgent = async (rawFindings) => {
     stop: ['</s>', '[INST]'],
   })
 
-  return completion.choices[0].text.trim()
+  const result = completion.choices[0].text.trim()
+  console.log('--------------------------------------------------')
+  console.log('[DEBUG] ✍️ Drafter Output:\n', result)
+  console.log('--------------------------------------------------')
+  return result
 }
 
 // ── Agent: Critic (Llama-3-70B-Instruct-AWQ, port 8002) ──────────────────────
 // Adversarially audits the Drafter's output.
 // Returns { verifiedReport, urgencyFlag, recommendedDept, criticInterventions }.
 const runCriticAgent = async (draftAssessment, rawFindings) => {
+  console.log('\n[DEBUG] 🛡️ Critic Agent: Auditing for hallucinations...')
   const completion = await criticClient.chat.completions.create({
     model: CONFIG.criticModel,
     messages: [
@@ -195,6 +206,9 @@ const runCriticAgent = async (draftAssessment, rawFindings) => {
   })
 
   const text = completion.choices[0].message.content.trim()
+  console.log('--------------------------------------------------')
+  console.log('[DEBUG] 🛡️ Critic Raw Audit:\n', text)
+  console.log('--------------------------------------------------')
 
   // Extract the JSON metadata block
   let urgencyFlag = 'Moderate'

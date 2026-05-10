@@ -12,7 +12,7 @@
   </table>
   <br/>
   <p><strong>Radiology, Redefined by Consensus.</strong></p>
-  <p>An edge-native, adversarial AI swarm designed to extract, draft, and aggressively verify clinical findings in milliseconds—completely offline.</p>
+  <p>An enterprise-grade, adversarial AI swarm running on AMD Instinct™ accelerators, designed to extract, draft, and aggressively verify clinical findings in milliseconds—completely offline.</p>
 </div>
 
 ---
@@ -23,19 +23,19 @@ Standard medical AI relies on single, massive transformer models. When you force
 
 ## 🛡️ The Hyperion Solution
 
-Hyperion abandons single-model frailty. Instead, it utilizes a localized **Adversarial Swarm Architecture**. Three independent agents handle distinct cognitive loads, verifying each other's outputs with mathematical precision before a final report is ever generated. Zero patient data ever leaves the room.
+Hyperion abandons single-model frailty. Instead, it utilizes a localized **Adversarial Swarm Architecture** optimized for **AMD ROCm**. Three independent 70B-class agents handle distinct cognitive loads, verifying each other's outputs with mathematical precision before a final report is ever generated. Zero patient data ever leaves the room.
 
 ---
 
 ## 🧠 Swarm Architecture
 
-The Hyperion Engine operates on a 3-Node localized network.
+The Hyperion Engine operates on a 3-Node localized network, powered by **vLLM** on **AMD MI300X**.
 
 ```mermaid
 graph TD
     A[Raw X-Ray / MRI Scan] -->|Input| B(Node 1: Edge Vision)
-    B -->|Extracts Geometry via LLaVA / OpenGV LLaVA| C{Node 2: The Drafter}
-    C -->|Synthesizes Preliminary Findings via DeepSeek / Meditron| D(Node 3: The Critic)
+    B -->|Geometry via InternVL-Chat-V1.5| C{Node 2: The Drafter}
+    C -->|Synthesizes Preliminary Findings via Meditron-70B| D(Node 3: The Critic)
     D -->|Adversarial Audit: Compares Draft to Raw Pixels| C
     D -->|100% Consensus Reached| E[Verified Diagnostic Report]
     
@@ -50,14 +50,14 @@ graph TD
     class E output
 ```
 
-### 1. Edge Vision (LLaVA / OpenGV LLaVA)
-A lightweight, multimodal agent dedicated entirely to geometry extraction. It doesn't diagnose; it maps pixel variances natively on GPU hardware without internet access. Supported models include standard LLaVA and OpenGV LLaVA.
+### 1. Edge Vision (InternVL-Chat-V1.5)
+A high-resolution multimodal agent dedicated entirely to geometry extraction. It doesn't diagnose; it maps pixel variances natively on AMD hardware using AWQ quantization for maximum throughput.
 
-### 2. Drafter Node (DeepSeek / Meditron)
-Takes the raw structural data from the Vision Node and cross-references it against an embedded clinical knowledge base to write a preliminary impression. Powered by advanced reasoning models like DeepSeek and Meditron.
+### 2. Drafter Node (Meditron-70B)
+Takes the raw structural data from the Vision Node and cross-references it against a massive clinical knowledge base to write a preliminary impression. Powered by the world-class Meditron-70B model.
 
-### 3. Critic Override
-An independent auditor checks the draft against the raw data, violently rejecting hallucinations. A report is only finalized when the network reaches 100% consensus.
+### 3. Critic Override (Llama-3-70B)
+An independent auditor checks the draft against the raw data, violently rejecting hallucinations. Using Llama-3-70B's superior reasoning, a report is only finalized when the network reaches 100% consensus.
 
 ---
 
@@ -76,66 +76,61 @@ Hyperion ships with two distinct operational modes, easily toggled from the Reac
 
 * **Frontend:** React, Tailwind CSS v4, Framer Motion (Physics-based cinematic UI).
 * **Backend Orchestration:** Node.js, Express, Multer (File Handling).
-* **AI Engine:** Ollama (Local LLaVA and OpenGV LLaVA execution), DeepSeek API & Meditron (Reasoning Nodes).
+* **AI Engine:** **vLLM (ROCm Optimized)** running AWQ-quantized 70B models.
+* **Hardware:** **AMD Instinct™ MI300X (192GB VRAM)** for massive parallel inference.
 * **Design System:** Deep-Space Glassmorphism, Custom SVG animated iconography.
 
 ---
 
-## 🚀 The Monkey-Proof Installation Guide
+## 🚀 Enterprise Installation Guide
 
-Follow these exact steps to run the Hyperion Swarm on your local machine.
+Follow these steps to ignite the Hyperion Swarm on AMD hardware.
 
 ### Prerequisites
-1. Install [Node.js](https://nodejs.org/en/) (v18+)
-2. Install [Ollama](https://ollama.com/) (For local Vision processing)
-3. Get a [DeepSeek API Key](https://platform.deepseek.com/)
+1. **Hardware:** AMD GPU with ROCm support (MI300X recommended, 128GB+ VRAM required).
+2. **Software:** Docker, AMD GPU Drivers (ROCm 6.0+).
+3. **Environment:** Node.js (v18+) for the orchestrator and HUD.
 
-### Step 1: Install the Vision Model
-Open your terminal and pull the LLaVA model into your local Ollama instance:
+### Step 1: Ignite the Model Swarm
+The swarm is automated via Docker. Run the following script to launch three vLLM instances (Drafter, Vision, Critic):
 ```bash
-ollama run llava
+chmod +x start_medical_swarm.sh
+./start_medical_swarm.sh
 ```
-*(Once it downloads and says "success", type `/bye` to exit. Ollama is now running in the background).*
+*Note: This will download approximately 150GB of model weights on the first run.*
 
-### Step 2: Clone & Setup the Codebase
+### Step 2: Clone & Setup the HUD
 ```bash
 # Clone the repository
 git clone https://github.com/project-hyperion/core.git
-cd project-hyperion-test
+cd project-hyperion
 
-# Install Backend Dependencies
-cd server
-npm install
-
-# Install Frontend Dependencies
-cd ../client
-npm install
+# Install Backend & Frontend Dependencies
+cd server && npm install
+cd ../client && npm install
 ```
 
 ### Step 3: Configure Environment Variables
-Inside the `/server` folder, create a file named `.env`:
+Ensure your `/server/.env` points to the local vLLM nodes:
 ```bash
 # /server/.env
 PORT=3000
-DEEPSEEK_API_KEY="your_api_key_here"
+LOCAL_DRAFTER_URL=http://localhost:8000/v1
+LOCAL_VISION_URL=http://localhost:8001/v1
+LOCAL_CRITIC_URL=http://localhost:8002/v1
+
+DRAFTER_MODEL=TheBloke/Meditron-70B-AWQ
+VISION_MODEL=OpenGVLab/InternVL-Chat-V1-5-AWQ
+CRITIC_MODEL=casperhansen/llama-3-70b-instruct-awq
 ```
 
-### Step 4: Ignite the Swarm
-You will need two terminal windows to run both the frontend and backend simultaneously.
+### Step 4: Launch the React HUD
+Start the orchestrator and the frontend:
 
-**Terminal 1 (The Backend Orchestrator):**
-```bash
-cd server
-npm run dev
-```
+**Terminal 1 (Backend):** `cd server && npm run dev`
+**Terminal 2 (Frontend):** `cd client && npm run dev`
 
-**Terminal 2 (The React HUD):**
-```bash
-cd client
-npm run dev
-```
-
-Open `http://localhost:5173` in your browser. Welcome to the Engine Room.
+Open `http://localhost:5173`. Welcome to the Engine Room.
 
 ---
 
@@ -144,4 +139,4 @@ Open `http://localhost:5173` in your browser. Welcome to the Engine Room.
 > [!WARNING]
 > **Diagnostic Augmentation Only:** Hyperion is an assistive tool, not an autonomous diagnostic agent. A licensed medical practitioner must always review the 'Verified Consensus Report' before initiating patient treatment. The creators are not liable for clinical misdiagnoses.
 
-**Privacy Note:** When deployed properly, Hyperion operates on a "Zero Data Retention" architecture. No Protected Health Information (PHI) is permanently stored or transmitted.
+**Privacy Note:** Hyperion operates on a "Zero Data Retention" architecture. No Protected Health Information (PHI) is permanently stored or transmitted outside the ROCm container.
