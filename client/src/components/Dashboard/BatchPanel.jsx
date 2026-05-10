@@ -7,9 +7,9 @@ const ALLOWED = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/tiff'])
 
 function UrgencyBadge({ flag }) {
   const styles = {
-    High:     'bg-red-950/50 border-red-500/60 text-red-400',
+    High: 'bg-red-950/50 border-red-500/60 text-red-400',
     Moderate: 'bg-amber-950/50 border-amber-500/40 text-amber-400',
-    Low:      'bg-emerald-950/50 border-emerald-500/40 text-emerald-400',
+    Low: 'bg-emerald-950/50 border-emerald-500/40 text-emerald-400',
   }
   return (
     <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border ${styles[flag] || styles.Moderate}`}>
@@ -26,22 +26,21 @@ function ResultCard({ item, index }) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
-      className={`rounded-2xl border p-4 flex flex-col gap-3 ${
-        item.status === 'error' ? 'border-red-500/30 bg-red-950/10'
-        : item.status === 'partial' ? 'border-amber-500/30 bg-amber-950/10'
-        : 'border-slate-800 bg-slate-900/40'
-      }`}
+      className={`rounded-2xl border p-4 flex flex-col gap-3 ${item.status === 'error' ? 'border-red-500/30 bg-red-950/10'
+          : item.status === 'partial' ? 'border-amber-500/30 bg-amber-950/10'
+            : 'border-slate-800 bg-slate-900/40'
+        }`}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-mono text-slate-500">Image {item.index + 1}</span>
+        <span className="text-xs font-inter text-slate-500">Image {item.index + 1}</span>
         {ok && <UrgencyBadge flag={item.data.urgency_flag} />}
-        {item.status === 'error' && <span className="text-[9px] text-red-400 font-mono">Failed</span>}
+        {item.status === 'error' && <span className="text-[9px] text-red-400 font-inter">Failed</span>}
       </div>
 
       {ok && (
         <>
-          <div className="text-xs text-slate-400 font-mono">{item.data.recommended_dept}</div>
-          <div className="text-xs text-slate-500 font-mono flex items-center justify-between">
+          <div className="text-xs text-slate-400 font-inter">{item.data.recommended_dept}</div>
+          <div className="text-xs text-slate-500 font-inter flex items-center justify-between">
             <span>{item.data.critic_interventions} intervention{item.data.critic_interventions !== 1 ? 's' : ''}</span>
             <span>{item.processing_latency}</span>
           </div>
@@ -59,7 +58,7 @@ function ResultCard({ item, index }) {
                 exit={{ opacity: 0, height: 0 }}
                 className="overflow-hidden"
               >
-                <div className="text-xs text-slate-400 font-mono leading-relaxed p-3 rounded-xl bg-slate-950 border border-slate-800 mt-1 whitespace-pre-wrap">
+                <div className="text-xs text-slate-400 font-inter leading-relaxed p-3 rounded-xl bg-slate-950 border border-slate-800 mt-1 whitespace-pre-wrap">
                   {item.data.verified_report}
                 </div>
               </motion.div>
@@ -69,7 +68,7 @@ function ResultCard({ item, index }) {
       )}
 
       {item.status === 'error' && (
-        <div className="text-xs text-red-400 font-mono">{item.error}</div>
+        <div className="text-xs text-red-400 font-inter">{item.error}</div>
       )}
     </motion.div>
   )
@@ -157,7 +156,7 @@ export default function BatchPanel({ speedMode = 'fast' }) {
         <div className="text-4xl">🔬</div>
         <div className="text-center">
           <p className="text-sm font-bold text-slate-300">Drop up to {MAX_FILES} medical scans</p>
-          <p className="text-xs text-slate-600 mt-1 font-mono">JPEG · PNG · WebP · TIFF — max {MAX_FILES} files, 20MB each</p>
+          <p className="text-xs text-slate-600 mt-1 font-inter">JPEG · PNG · WebP · TIFF — max {MAX_FILES} files, 20MB each</p>
         </div>
       </div>
 
@@ -177,7 +176,7 @@ export default function BatchPanel({ speedMode = 'fast' }) {
       )}
 
       {error && (
-        <div className="p-4 rounded-xl border border-red-500/30 bg-red-950/20 text-red-400 text-xs font-mono">
+        <div className="p-4 rounded-xl border border-red-500/30 bg-red-950/20 text-red-400 text-xs font-inter">
           {error}
         </div>
       )}
@@ -193,7 +192,7 @@ export default function BatchPanel({ speedMode = 'fast' }) {
       )}
 
       {isLoading && (
-        <div className="flex items-center justify-center gap-3 py-8 text-cyan-400 font-mono text-xs animate-pulse">
+        <div className="flex items-center justify-center gap-3 py-8 text-cyan-400 font-inter text-xs animate-pulse">
           <span className="text-xl">⚡</span>
           Running {files.length} parallel swarm pipelines...
         </div>
@@ -214,7 +213,7 @@ export default function BatchPanel({ speedMode = 'fast' }) {
           ].map(s => (
             <div key={s.label} className="p-3 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
               <div className={`text-2xl font-bold font-inter ${s.color}`}>{s.value}</div>
-              <div className="text-[10px] font-mono text-slate-600 uppercase tracking-widest mt-1">{s.label}</div>
+              <div className="text-[10px] font-inter text-slate-600 uppercase tracking-widest mt-1">{s.label}</div>
             </div>
           ))}
         </motion.div>

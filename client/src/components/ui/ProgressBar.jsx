@@ -39,7 +39,7 @@ export default function ProgressBar({
                 />
             </div>
             {showLabel && (
-                <span className="text-xs font-mono text-slate-400 w-10 text-right">{pct}%</span>
+                <span className="text-xs font-inter text-slate-400 w-10 text-right">{pct}%</span>
             )}
         </div>
     )

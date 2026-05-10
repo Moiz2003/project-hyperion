@@ -20,7 +20,7 @@ const ProductPage = ({ onNavigate }) => {
   };
 
   return (
-    <div className="hyperion-product-page bg-[#020617] min-h-screen">
+    <div className="hyperion-product-page bg-[#0a1628] min-h-screen">
       <Header onNavigate={onNavigate} />
 
       <main>
@@ -58,20 +58,20 @@ const ProductPage = ({ onNavigate }) => {
           {/* Tabs */}
           <div className="tabs-container">
             <div className="tabs">
-              <button 
-                className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`} 
+              <button
+                className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
                 onClick={() => switchTab('overview')}
               >
                 Overview
               </button>
-              <button 
-                className={`tab-btn ${activeTab === 'capabilities' ? 'active' : ''}`} 
+              <button
+                className={`tab-btn ${activeTab === 'capabilities' ? 'active' : ''}`}
                 onClick={() => switchTab('capabilities')}
               >
                 Capabilities
               </button>
-              <button 
-                className={`tab-btn ${activeTab === 'deployment' ? 'active' : ''}`} 
+              <button
+                className={`tab-btn ${activeTab === 'deployment' ? 'active' : ''}`}
                 onClick={() => switchTab('deployment')}
               >
                 Deployment
@@ -156,7 +156,7 @@ const ProductPage = ({ onNavigate }) => {
               </div>
             </div>
 
-            <div className="feature-row alt">
+            {/* <div className="feature-row alt">
               <div className="feature-text">
                 <h3><span className="accent">Clinical</span> Dashboard</h3>
                 <p>Track outcomes, performance metrics, and diagnostic trends across your hospital. Real-time alerts for critical findings. Patient history and longitudinal tracking.</p>
@@ -169,7 +169,7 @@ const ProductPage = ({ onNavigate }) => {
               <div className="feature-visual">
                 Dashboard analytics UI
               </div>
-            </div>
+            </div> */}
           </div>
         </section>
 
@@ -319,11 +319,11 @@ const ProductPage = ({ onNavigate }) => {
         </section>
 
         {/* CTA */}
-        <section className="py-20 bg-slate-950 border-t border-blue-500/20">
+        <section className="py-20 bg-[#0a1628] border-t border-blue-500/20">
           <div className="flex flex-col gap-2 w-fit mx-auto text-center">
             <h2 className="text-4xl font-bold text-white mb-4">Ready to Deploy Hyperion?</h2>
             <p className="text-slate-300 text-lg mb-6">Start with a free pilot. No credit card required. See Hyperion analyze your patient data in minutes.</p>
-            <button 
+            <button
               className="px-8 py-4 bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 rounded-xl font-bold tracking-[0.2em] uppercase shadow-[0_0_40px_rgba(34,211,238,0.25)] hover:shadow-[0_0_55px_rgba(34,211,238,0.50)] transition-all active:scale-95 cursor-pointer w-fit mx-auto"
               onClick={() => onNavigate('dashboard')}
             >

@@ -273,7 +273,7 @@ export default function SwarmVisualizer({ events, latency, mode }) {
           <i className="text-[#00c8ff] text-lg"><HUDIcons.Brain /></i>
           <span className="text-[13px] font-bold text-white uppercase tracking-[0.1em]">Agent Consensus</span>
         </div>
-        <div className="flex items-center gap-3 text-[10px] font-mono text-slate-500">
+        <div className="flex items-center gap-3 text-[10px] font-inter text-slate-500">
           <span className="uppercase">Mode: <strong className="text-cyan-400">{mode}</strong></span>
           {latency && <span>Time: <strong className="text-white">{latency}</strong></span>}
         </div>

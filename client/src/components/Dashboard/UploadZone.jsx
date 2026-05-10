@@ -54,9 +54,9 @@ export default function UploadZone({
                   <span className="font-medium text-white truncate max-w-[200px]">
                     patient-scan-{btoa(file.name + file.size).replace(/[^a-zA-Z0-9]/g, '').substring(0, 8).toLowerCase()}.jpeg
                   </span>
-                  <span className="text-[10px] text-slate-500 font-mono">Original: {file.name}</span>
+                  <span className="text-[10px] text-slate-500 font-inter">Original: {file.name}</span>
                 </div>
-                <span className="text-slate-500 font-mono ml-4">
+                <span className="text-slate-500 font-inter ml-4">
                   {file.size < 1024 * 1024
                     ? (file.size / 1024).toFixed(2) + ' KB'
                     : (file.size / (1024 * 1024)).toFixed(2) + ' MB'}

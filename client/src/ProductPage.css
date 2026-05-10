@@ -22,7 +22,7 @@
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 4rem;
-    align-items: center;
+    /* align-items: center; */
     margin-bottom: 4rem;
 }
 
@@ -135,8 +135,13 @@
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 /* Features Section */
@@ -433,7 +438,7 @@
         border-bottom: 1px solid rgba(0, 212, 255, 0.05);
         text-align: right;
     }
-    
+
     .hyperion-product-page .comparison-table td:last-child {
         border-bottom: none;
     }
@@ -454,7 +459,7 @@
         border-bottom: 1px solid rgba(0, 212, 255, 0.2);
         margin-bottom: 0.5rem;
     }
-    
+
     .hyperion-product-page .comparison-table td:first-child::before {
         display: none;
     }

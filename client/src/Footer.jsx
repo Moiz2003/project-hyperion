@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { HyperionLogo } from './Logo'
 
 const socialLinks = [
   {
@@ -57,8 +58,8 @@ export const Footer = ({ onNavigate }) => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
-            <h3 className="text-lg font-bold text-white mb-4">Hyperion</h3>
-            <p className="text-sm text-slate-400 leading-relaxed mb-6">
+            <HyperionLogo horizontal className="h-12 md:16 w-auto" />
+            <p className="text-sm text-slate-400 leading-relaxed mb-6 mt-4">
               Clinical AI diagnostic swarm for radiology. Offline-capable, privacy-first, consensus-driven.
             </p>
             <div className="flex items-center gap-3">
@@ -106,10 +107,10 @@ export const Footer = ({ onNavigate }) => {
 
         {/* Bottom bar */}
         <div className="pt-8 border-t border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-slate-600 font-mono">
+          <p className="text-xs text-slate-600 font-inter">
             &copy; {new Date().getFullYear()} Project Hyperion. All rights reserved.
           </p>
-          <p className="text-xs text-slate-700 font-mono">
+          <p className="text-xs text-slate-700 font-inter">
             Powered by AMD MI300X &middot; Zero data transit &middot; Air-gapped by design
           </p>
         </div>

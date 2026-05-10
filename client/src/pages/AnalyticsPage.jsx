@@ -83,7 +83,7 @@ function StatCard({ label, value, sub, color = 'cyan', icon, delay = 0 }) {
       >
         {value}
       </motion.span>
-      {sub && <span className="text-xs text-slate-600 font-mono">{sub}</span>}
+      {sub && <span className="text-xs text-slate-600 font-inter">{sub}</span>}
     </motion.div>
   )
 }
@@ -94,7 +94,7 @@ function UrgencyBar({ label, count, total, color }) {
   const barColors = { High: 'bg-red-500', Moderate: 'bg-amber-500', Low: 'bg-emerald-500' }
   return (
     <div className="flex items-center gap-3">
-      <span className="text-xs font-mono text-slate-500 w-20 shrink-0">{label}</span>
+      <span className="text-xs font-inter text-slate-500 w-20 shrink-0">{label}</span>
       <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
         <motion.div
           initial={{ width: 0 }}
@@ -103,7 +103,7 @@ function UrgencyBar({ label, count, total, color }) {
           className={`h-full rounded-full ${barColors[label]}`}
         />
       </div>
-      <span className="text-xs font-mono text-slate-400 w-12 text-right">{count} ({pct}%)</span>
+      <span className="text-xs font-inter text-slate-400 w-12 text-right">{count} ({pct}%)</span>
     </div>
   )
 }
@@ -258,7 +258,7 @@ export default function AnalyticsPage() {
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="p-6 rounded-2xl border border-red-500/30 bg-red-950/20 text-red-400 text-sm font-mono"
+                className="p-6 rounded-2xl border border-red-500/30 bg-red-950/20 text-red-400 text-sm font-inter"
               >
                 {error === 'Persistence unavailable'
                   ? 'MongoDB is not connected. Analytics require database access.'
@@ -333,7 +333,7 @@ export default function AnalyticsPage() {
                     icon={<HUDIcons.Users />}
                     delay={0.45}
                   >
-                    <p className="text-[10px] font-mono text-slate-700 mb-4">
+                    <p className="text-[10px] font-inter text-slate-700 mb-4">
                       Dots: <span className="text-red-500">High</span> /{' '}
                       <span className="text-amber-500">Moderate</span> /{' '}
                       <span className="text-emerald-500">Low</span> urgency

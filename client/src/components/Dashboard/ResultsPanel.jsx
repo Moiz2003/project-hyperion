@@ -89,14 +89,14 @@ export default function ResultsPanel({
                     value={residentInput}
                     onChange={(e) => onResidentInput(e.target.value)}
                     placeholder="Enter your clinical findings..."
-                    className="w-full min-h-[150px] bg-[#000] border border-slate-700 rounded-xl p-4 text-slate-300 font-mono text-sm focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/50 transition-colors mb-6 resize-y"
+                    className="w-full min-h-[150px] bg-[#000] border border-slate-700 rounded-xl p-4 text-slate-300 font-inter text-sm focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/50 transition-colors mb-6 resize-y"
                   />
 
                   {hint && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="mb-6 p-4 rounded-xl bg-cyan-950/30 border border-cyan-400/30 text-cyan-300 text-sm font-mono flex items-start gap-3 shadow-[0_0_20px_rgba(34,211,238,0.1)]"
+                      className="mb-6 p-4 rounded-xl bg-cyan-950/30 border border-cyan-400/30 text-cyan-300 text-sm font-inter flex items-start gap-3 shadow-[0_0_20px_rgba(34,211,238,0.1)]"
                     >
                       <HUDIcons.Sparkles />
                       {hint}
@@ -104,7 +104,7 @@ export default function ResultsPanel({
                   )}
 
                   {revealError && (
-                    <div className="mb-6 p-4 rounded-xl bg-red-950/30 border border-red-500/30 text-red-300 text-sm font-mono">
+                    <div className="mb-6 p-4 rounded-xl bg-red-950/30 border border-red-500/30 text-red-300 text-sm font-inter">
                       {revealError}
                     </div>
                   )}
@@ -129,7 +129,7 @@ export default function ResultsPanel({
                     </button>
                   </div>
 
-                  <p className="text-center text-[10px] text-slate-600 font-mono uppercase tracking-widest mt-8">
+                  <p className="text-center text-[10px] text-slate-600 font-inter uppercase tracking-widest mt-8">
                     Hints generated via localized AMD ROCm Pipeline for 0ms transit latency.
                   </p>
                 </motion.div>
@@ -142,11 +142,11 @@ export default function ResultsPanel({
               <div className="flex flex-wrap items-center gap-4">
                 <div className={`px-4 py-1 rounded-full border text-[10px] font-bold tracking-widest uppercase flex items-center gap-2 shadow-lg backdrop-blur-md
                   ${results.urgency_flag === 'High'
-                    ? 'bg-red-950/20 border-red-500/30 text-red-400'
+                    ? 'bg-red-950/20 border-red-500/30 text-red-400 py-2 px-6'
                     : 'bg-emerald-950/20 border-emerald-500/30 text-emerald-400'
                   }`}
                 >
-                  <HUDIcons.Alert />
+                  {/* <HUDIcons.Alert /> */}
                   {results.urgency_flag || 'Low'} Urgency
                 </div>
 
@@ -155,7 +155,7 @@ export default function ResultsPanel({
                   {results.recommended_dept || 'Internal Medicine'}
                 </div>
 
-                <div className="px-4 py-2 rounded-full bg-[#000]/40 border border-slate-800 text-slate-400 text-[10px] font-mono flex items-center gap-2 ml-auto">
+                <div className="px-4 py-2 rounded-full bg-[#000]/40 border border-slate-800 text-slate-400 text-[10px] font-inter flex items-center gap-2 ml-auto">
                   <HUDIcons.Clock />
                   {results.processing_latency || '0.0s'}
                 </div>
@@ -326,29 +326,29 @@ export default function ResultsPanel({
                     {/* Score Breakdown */}
                     <div className="space-y-3 flex-1">
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-xs text-slate-400 font-mono shrink-0">Keywords Matched</span>
+                        <span className="text-xs text-slate-400 font-inter shrink-0">Keywords Matched</span>
                         <span className="text-sm font-bold text-emerald-400">
                           {Array.isArray(diagnosisMatch.matched) ? diagnosisMatch.matched.length : (diagnosisMatch.matched || 0)}
                         </span>
                       </div>
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-xs text-slate-400 font-mono shrink-0">Keywords Missed</span>
+                        <span className="text-xs text-slate-400 font-inter shrink-0">Keywords Missed</span>
                         <span className="text-sm font-bold text-red-400">
                           {Array.isArray(diagnosisMatch.missed) ? diagnosisMatch.missed.length : (diagnosisMatch.missed || 0)}
                         </span>
                       </div>
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-xs text-slate-400 font-mono shrink-0">Extra Keywords</span>
+                        <span className="text-xs text-slate-400 font-inter shrink-0">Extra Keywords</span>
                         <span className="text-sm font-bold text-amber-400">
                           {Array.isArray(diagnosisMatch.extra) ? diagnosisMatch.extra.length : (diagnosisMatch.extra || 0)}
                         </span>
                       </div>
                       <div className="pt-2 border-t border-indigo-500/20 flex items-center justify-between gap-3">
-                        <span className="text-xs text-slate-400 font-mono shrink-0">Total AI Keywords</span>
+                        <span className="text-xs text-slate-400 font-inter shrink-0">Total AI Keywords</span>
                         <span className="text-sm font-bold text-cyan-400">{diagnosisMatch.total_ai_keywords || 0}</span>
                       </div>
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-xs text-slate-400 font-mono shrink-0">Your Keywords</span>
+                        <span className="text-xs text-slate-400 font-inter shrink-0">Your Keywords</span>
                         <span className="text-sm font-bold text-cyan-400">{diagnosisMatch.total_resident_keywords || 0}</span>
                       </div>
                     </div>
@@ -356,35 +356,35 @@ export default function ResultsPanel({
 
                   {/* Keyword chips — shown below counts so each list is readable */}
                   {(Array.isArray(diagnosisMatch.matched) && diagnosisMatch.matched.length > 0) ||
-                   (Array.isArray(diagnosisMatch.missed) && diagnosisMatch.missed.length > 0) ||
-                   (Array.isArray(diagnosisMatch.extra) && diagnosisMatch.extra.length > 0) ? (
+                    (Array.isArray(diagnosisMatch.missed) && diagnosisMatch.missed.length > 0) ||
+                    (Array.isArray(diagnosisMatch.extra) && diagnosisMatch.extra.length > 0) ? (
                     <div className="mt-6 space-y-3">
                       {Array.isArray(diagnosisMatch.matched) && diagnosisMatch.matched.length > 0 && (
                         <div>
-                          <div className="text-[10px] font-mono uppercase tracking-widest text-emerald-500/80 mb-2">Matched</div>
+                          <div className="text-[10px] font-inter uppercase tracking-widest text-emerald-500/80 mb-2">Matched</div>
                           <div className="flex flex-wrap gap-1.5">
                             {diagnosisMatch.matched.map((k, i) => (
-                              <span key={`m-${i}`} className="px-2.5 py-1 rounded-md bg-emerald-950/30 border border-emerald-500/30 text-emerald-300 text-[11px] font-mono">{k}</span>
+                              <span key={`m-${i}`} className="px-2.5 py-1 rounded-md bg-emerald-950/30 border border-emerald-500/30 text-emerald-300 text-[11px] font-inter">{k}</span>
                             ))}
                           </div>
                         </div>
                       )}
                       {Array.isArray(diagnosisMatch.missed) && diagnosisMatch.missed.length > 0 && (
                         <div>
-                          <div className="text-[10px] font-mono uppercase tracking-widest text-red-500/80 mb-2">Missed by you</div>
+                          <div className="text-[10px] font-inter uppercase tracking-widest text-red-500/80 mb-2">Missed by you</div>
                           <div className="flex flex-wrap gap-1.5">
                             {diagnosisMatch.missed.map((k, i) => (
-                              <span key={`x-${i}`} className="px-2.5 py-1 rounded-md bg-red-950/30 border border-red-500/30 text-red-300 text-[11px] font-mono">{k}</span>
+                              <span key={`x-${i}`} className="px-2.5 py-1 rounded-md bg-red-950/30 border border-red-500/30 text-red-300 text-[11px] font-inter">{k}</span>
                             ))}
                           </div>
                         </div>
                       )}
                       {Array.isArray(diagnosisMatch.extra) && diagnosisMatch.extra.length > 0 && (
                         <div>
-                          <div className="text-[10px] font-mono uppercase tracking-widest text-amber-500/80 mb-2">Extra (not in AI report)</div>
+                          <div className="text-[10px] font-inter uppercase tracking-widest text-amber-500/80 mb-2">Extra (not in AI report)</div>
                           <div className="flex flex-wrap gap-1.5">
                             {diagnosisMatch.extra.map((k, i) => (
-                              <span key={`e-${i}`} className="px-2.5 py-1 rounded-md bg-amber-950/30 border border-amber-500/30 text-amber-300 text-[11px] font-mono">{k}</span>
+                              <span key={`e-${i}`} className="px-2.5 py-1 rounded-md bg-amber-950/30 border border-amber-500/30 text-amber-300 text-[11px] font-inter">{k}</span>
                             ))}
                           </div>
                         </div>
@@ -408,7 +408,7 @@ export default function ResultsPanel({
                       Initial Draft (Pre-Critic)
                     </h4>
                     <div className="p-4 rounded-md bg-amber-950/10 border border-amber-500/20 text-slate-400 font-medium text-sm leading-relaxed relative overflow-hidden">
-                      <div className="text-[9px] font-mono text-amber-600 uppercase tracking-widest mb-2">Before Critic Review</div>
+                      <div className="text-[9px] font-inter text-amber-600 uppercase tracking-widest mb-2">Before Critic Review</div>
                       {results.initial_draft}
                     </div>
                   </motion.div>
