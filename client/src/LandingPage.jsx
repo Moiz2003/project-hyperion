@@ -44,6 +44,40 @@ const CustomIcons = {
   )
 };
 
+// ── ECG Heartbeat Animation ──────────────────────────────────────
+const EcgAnimation = () => (
+  <div className="relative w-full flex items-center justify-center py-8">
+    <style>{`
+      @keyframes pulse-draw {
+        0%   { stroke-dashoffset: 1; opacity: 0.8; }
+        65%  { stroke-dashoffset: 0; opacity: 1;   }
+        82%  { stroke-dashoffset: 0; opacity: 0.5; }
+        100% { stroke-dashoffset: 1; opacity: 0.8; }
+      }
+      .pulse-path { stroke-dasharray: 1; animation: pulse-draw 3s ease-in-out infinite; }
+    `}</style>
+    <svg viewBox="0 0 400 200" className="w-full h-full max-w-lg overflow-visible drop-shadow-[0_0_30px_rgba(34,211,238,0.4)]">
+      <defs>
+        <linearGradient id="pulseGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stopColor="#0ea5e9" stopOpacity="0.2" />
+          <stop offset="50%"  stopColor="#22d3ee" stopOpacity="1"   />
+          <stop offset="100%" stopColor="#6366f1" stopOpacity="0.2" />
+        </linearGradient>
+      </defs>
+      <path
+        className="pulse-path"
+        d="M 0 100 L 100 100 L 120 50 L 160 150 L 200 20 L 230 180 L 260 80 L 280 100 L 400 100"
+        fill="none"
+        stroke="url(#pulseGradient)"
+        strokeWidth="5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        pathLength="1"
+      />
+    </svg>
+  </div>
+);
+
 export default function LandingPage({ onNavigate }) {
   const { scrollYProgress } = useScroll();
   const [toastMessage, setToastMessage] = useState(null);
@@ -184,34 +218,13 @@ export default function LandingPage({ onNavigate }) {
               </div>
             </motion.div>
 
-            {/* Hero Card */}
+            {/* Hero ECG Animation */}
             <motion.div
               initial={{ opacity: 0, x: 40 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 1, ease: 'easeOut', delay: 0.2 }}
-              className="relative"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-2xl blur-3xl"></div>
-              <div className="relative bg-slate-900/50 border border-cyan-400/30 rounded-2xl p-8 backdrop-blur-sm">
-                <div className="space-y-4">
-                  <div className="bg-gradient-to-br from-cyan-900 to-blue-900 rounded-xl p-6 border border-cyan-400/30">
-                    <div className="text-sm text-cyan-400 font-semibold mb-3">Sample Analysis</div>
-                    <div className="bg-slate-800 rounded-lg h-40 mb-4 flex items-center justify-center border border-slate-700">
-                      <span className="text-slate-400">X-Ray Image</span>
-                    </div>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-slate-300">Status:</span>
-                        <span className="px-3 py-1 bg-yellow-500/20 text-yellow-300 rounded-full text-xs font-semibold">URGENT</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-300">Confidence:</span>
-                        <span className="text-cyan-400 font-semibold">94%</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <EcgAnimation />
             </motion.div>
           </div>
         </section>
