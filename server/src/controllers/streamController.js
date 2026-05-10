@@ -77,6 +77,12 @@ async function streamAnalysis(req, res) {
 
   const emit = (eventType, data) => send(res, eventType, data)
 
+  // Heartbeat keeps the SSE connection alive through Render/proxy idle timeouts
+  // (typically 30s). Without this the connection drops mid-pipeline in production.
+  const heartbeat = setInterval(() => {
+    try { res.write(`: heartbeat ${Date.now()}\n\n`) } catch (_) { /* socket gone */ }
+  }, 5000)
+
   // captureState lets the timeout handler access Vision findings even when
   // the full pipeline didn't finish — so the user sees real data, not a placeholder.
   const captureState = {}
@@ -168,9 +174,11 @@ async function streamAnalysis(req, res) {
         speed,
       })
     }
+    clearInterval(heartbeat)
     return res.end()
   }
 
+  clearInterval(heartbeat)
   const elapsed = ((Date.now() - t0) / 1000).toFixed(2)
 
   // Edu mode — cache for /reveal and emit edu-shaped pipeline_complete
